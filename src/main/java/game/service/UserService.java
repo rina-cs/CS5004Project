@@ -1,6 +1,6 @@
 package game.service;
 
-import game.user_management.User;
+import game.model.User;
 import game.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -42,5 +42,9 @@ public class UserService {
   // Delete User
   public void deleteUser(Long id) {
     userRepository.deleteById(id);
+  }
+
+  public Optional<User> findByEmail(String email) {
+    return userRepository.findByEmail(email);
   }
 }

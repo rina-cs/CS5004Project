@@ -1,6 +1,6 @@
 package game.repository;
 
-import game.user_management.User;
+import game.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 

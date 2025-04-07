@@ -4,6 +4,7 @@ import RegisterPage from "../views/RegisterPage.vue";
 import GamesPage from "../views/GamesPage.vue";
 import ProfilePage from "../views/ProfilePage.vue";
 import RankingsPage from "../views/RankingsPage.vue";
+import CartPage from "@/views/CartPage.vue";
 
 const routes = [
   { path: "/", component: LoginPage },
@@ -11,6 +12,7 @@ const routes = [
   { path: "/games", component: GamesPage },
   { path: "/profile", component: ProfilePage },
   { path: "/rankings", component: RankingsPage },
+  { path: "/cart",component: CartPage}
 ];
 
 const router = createRouter({

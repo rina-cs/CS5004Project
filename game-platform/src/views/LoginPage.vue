@@ -25,15 +25,31 @@
   const password = ref("");
   const errorMessage = ref("");
   const router = useRouter();
-  
-  function loginUser() {
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (!user || user.email !== email.value || user.password !== password.value) {
-      errorMessage.value = "Invalid email or password!";
-      return;
+
+  async function loginUser() {
+    try {
+      const response = await fetch('api/users/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: email.value,
+          password: password.value
+        })
+      });
+
+      if (response.ok) {
+        const userData = await response.json();
+        localStorage.setItem("loggedInUser", JSON.stringify(userData));
+        router.push("/games");
+      } else {
+        errorMessage.value = "Invalid email or password!";
+      }
+    } catch (error) {
+      errorMessage.value = "Login failed. Please try again.";
+      console.error('Login error:', error);
     }
-    localStorage.setItem("loggedInUser", JSON.stringify(user));
-    router.push("/games");
   }
   </script>
   

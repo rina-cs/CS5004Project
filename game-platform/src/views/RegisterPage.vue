@@ -27,8 +27,8 @@
   const confirmPassword = ref("");
   const errorMessage = ref("");
   const router = useRouter();
-  
-  function registerUser() {
+
+  async function registerUser() {
     if (!email.value || !password.value || !confirmPassword.value) {
       errorMessage.value = "All fields are required!";
       return;
@@ -37,11 +37,58 @@
       errorMessage.value = "Passwords do not match!";
       return;
     }
-  
-    const user = { email: email.value, password: password.value };
-    localStorage.setItem("user", JSON.stringify(user));
-  
-    router.push("/");
+
+    try {
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: email.value,
+          username: email.value,
+          password: password.value
+        })
+      });
+
+    console.log("响应状态:", response.status);
+
+    if (response.ok) {
+      // 检查响应是否有内容
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        try {
+          const data = await response.json();
+          console.log("注册成功，返回数据:", data);
+        } catch (e) {
+          console.log("注册成功，但响应不是有效JSON");
+        }
+      } else {
+        console.log("注册成功，无JSON响应");
+      }
+
+      // 无论如何都导航到登录页面
+      router.push("/");
+    } else {
+      // 尝试读取错误信息
+      try {
+        const text = await response.text();
+        console.error("错误响应内容:", text);
+
+        if (text && text.trim().startsWith('{')) {
+          const errorData = JSON.parse(text);
+          errorMessage.value = errorData.message || "Registration failed";
+        } else {
+          errorMessage.value = "Registration failed: " + (text || response.statusText);
+        }
+      } catch (e) {
+        errorMessage.value = "Registration failed: " + response.statusText;
+      }
+    }
+  } catch (error) {
+    errorMessage.value = "Connection error. Please try again.";
+    console.error('Registration error:', error);
+  }
   }
   </script>
   

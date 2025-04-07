@@ -8,6 +8,7 @@
         <v-btn text to="/games">Games</v-btn>
         <v-btn text to="/profile">Profile</v-btn>
         <v-btn text to="/rankings">Rankings</v-btn>
+        <v-btn text to="/cart">Cart</v-btn>
         <v-switch v-model="darkMode" label="🌙 Dark Mode" @change="toggleTheme"></v-switch>
       </v-app-bar>
       <router-view />

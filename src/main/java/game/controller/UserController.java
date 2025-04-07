@@ -1,6 +1,6 @@
 package game.controller;
 
-import game.user_management.User;
+import game.model.User;
 import game.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -10,7 +10,8 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/users")
+@CrossOrigin(origins = "http://localhost:8080")  // 允许前端跨域访问
 public class UserController {
 
   @Autowired
@@ -47,4 +48,16 @@ public class UserController {
     userService.deleteUser(id);
     return ResponseEntity.noContent().build();
   }
+
+  @PostMapping("/login")
+  public ResponseEntity<?> loginUser(@RequestBody User loginRequest) {
+
+    Optional<User> user = userService.findByEmail(loginRequest.getEmail());
+    if (user.isPresent() && user.get().getPassword().equals(loginRequest.getPassword())) {
+      return ResponseEntity.ok(user.get());
+    }
+
+    return ResponseEntity.status(401).body("Invalid credentials");
+  }
+
 }
