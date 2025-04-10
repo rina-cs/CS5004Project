@@ -9,7 +9,7 @@ import CartPage from "@/views/CartPage.vue";
 const routes = [
   { path: "/", component: LoginPage },
   { path: "/register", component: RegisterPage },
-  { path: "/games", component: GamesPage },
+  { path: "/game", component: GamesPage},
   { path: "/profile", component: ProfilePage },
   { path: "/rankings", component: RankingsPage },
   { path: "/cart",component: CartPage}

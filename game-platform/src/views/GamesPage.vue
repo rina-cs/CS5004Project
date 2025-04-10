@@ -59,16 +59,16 @@
         games.value = data;
       } else {
         games.value = [
-          { id: 1, name: "The Legend of Zelda", price: 30.0, likes: 100, image: "/images/zelda.jpg" },
-          { id: 2, name: "Super Mario Odyssey", price: 20.0, likes: 120, image: "/images/mario.jpg" },
-          { id: 3, name: "Minecraft", price: 30.0, likes: 200, image: "/images/minecraft.jpg" },
-          { id: 4, name: "Cyberpunk 2077", price: 30.0, likes: 90, image: "/images/cyberpunk.jpg" },
-          { id: 5, name: "Final Fantasy XIV", price: 30.0, likes: 150, image: "/images/final-fantasy.jpg" },
-          { id: 6, name: "Call of Duty", price: 30.0, likes: 85, image: "/images/cod.jpg" },
-          { id: 7, name: "Grand Theft Auto V", price: 50.0, likes: 300, image: "/images/gta.jpg" },
-          { id: 8, name: "Elden Ring", price: 30.0, likes: 250, image: "/images/elden-ring.jpg" },
-          { id: 9, name: "Hollow Knight", price: 20.0, likes: 170, image: "/images/hollow-knight.jpg" },
-          { id: 10, name: "Stardew Valley", price: 15.0, likes: 190, image: "/images/stardew.jpg" }
+          { id: 1, name: "The Legend of Zelda", price: 30.0, likes: 100, image: require("@/assets/images/zelda.jpg") },
+          { id: 2, name: "Super Mario Odyssey", price: 20.0, likes: 120, image: require("@/assets/images/mario.jpg") },
+          { id: 3, name: "Minecraft", price: 30.0, likes: 200, image: require("@/assets/images/minecraft.jpg") },
+          { id: 4, name: "Cyberpunk 2077", price: 30.0, likes: 90, image: require("@/assets/images/cyberpunk.jpg") },
+          { id: 5, name: "Final Fantasy XIV", price: 30.0, likes: 150, image: require("@/assets/images/final-fantasy.jpg") },
+          { id: 6, name: "Call of Duty", price: 30.0, likes: 85, image: require("@/assets/images/cod.jpg") },
+          { id: 7, name: "Grand Theft Auto V", price: 50.0, likes: 300, image: require("@/assets/images/gta.jpg") },
+          { id: 8, name: "Elden Ring", price: 30.0, likes: 250, image: require("@/assets/images/elden-ring.jpg") },
+          { id: 9, name: "Hollow Knight", price: 20.0, likes: 170, image: require("@/assets/images/hollow-knight.jpg") },
+          { id: 10, name: "Stardew Valley", price: 15.0, likes: 190, image: require("@/assets/images/stardew.jpg") }
         ];
       }
     } catch (error) {
