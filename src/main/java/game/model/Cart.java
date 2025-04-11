@@ -1,23 +1,12 @@
 package game.model;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
-@Entity
-@Table(name = "carts")
 public class Cart {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
-
   private Long userId;
-
-  @JsonManagedReference
-  @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-  @JoinColumn(name = "cart_id")
   private List<CartItem> items = new ArrayList<>();
 
   public Long getId() {

@@ -1,7 +1,7 @@
 package game.controller;
 
 import game.model.Game;
-import game.repository.GameRepository;
+import game.service.GameService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,16 +15,16 @@ import java.util.Optional;
 public class GameController {
 
   @Autowired
-  private GameRepository gameRepository;
+  private GameService gameService;
 
   @GetMapping
   public List<Game> getAllGames() {
-    return gameRepository.findAll();
+    return gameService.getAllGames();
   }
 
   @GetMapping("/{id}")
   public ResponseEntity<Game> getGameById(@PathVariable Long id) {
-    Optional<Game> game = gameRepository.findById(id);
+    Optional<Game> game = gameService.getGameById(id);
     if (game.isPresent()) {
       return ResponseEntity.ok(game.get());
     } else {
@@ -34,12 +34,12 @@ public class GameController {
 
   @PostMapping
   public Game createGame(@RequestBody Game game) {
-    return gameRepository.save(game);
+    return gameService.addGame(game);
   }
 
   @PutMapping("/{id}")
   public ResponseEntity<Game> updateGame(@PathVariable Long id, @RequestBody Game gameDetails) {
-    Optional<Game> optionalGame = gameRepository.findById(id);
+    Optional<Game> optionalGame = gameService.getGameById(id);
 
     if (optionalGame.isPresent()) {
       Game game = optionalGame.get();
@@ -48,7 +48,7 @@ public class GameController {
       game.setLikes(gameDetails.getLikes());
       game.setImage(gameDetails.getImage());
 
-      Game updatedGame = gameRepository.save(game);
+      Game updatedGame = gameService.updateGame(game);
       return ResponseEntity.ok(updatedGame);
     } else {
       return ResponseEntity.notFound().build();
@@ -57,10 +57,10 @@ public class GameController {
 
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> deleteGame(@PathVariable Long id) {
-    Optional<Game> game = gameRepository.findById(id);
+    Optional<Game> game = gameService.getGameById(id);
 
     if (game.isPresent()) {
-      gameRepository.delete(game.get());
+      gameService.deleteGame(id);
       return ResponseEntity.ok().build();
     } else {
       return ResponseEntity.notFound().build();
@@ -69,13 +69,13 @@ public class GameController {
 
   @PutMapping("/{id}/like")
   public ResponseEntity<Game> likeGame(@PathVariable Long id) {
-    Optional<Game> optionalGame = gameRepository.findById(id);
+    Optional<Game> optionalGame = gameService.getGameById(id);
 
     if (optionalGame.isPresent()) {
       Game game = optionalGame.get();
       game.setLikes(game.getLikes() + 1);
 
-      Game updatedGame = gameRepository.save(game);
+      Game updatedGame = gameService.updateGame(game);
       return ResponseEntity.ok(updatedGame);
     } else {
       return ResponseEntity.notFound().build();
@@ -84,16 +84,16 @@ public class GameController {
 
   @GetMapping("/top")
   public List<Game> getTopGames() {
-    return gameRepository.findTop10ByOrderByLikesDesc();
+    return gameService.findTop10ByOrderByLikesDesc();
   }
 
   @GetMapping("/cheapest")
   public List<Game> getCheapestGames() {
-    return gameRepository.findTop10ByOrderByPriceAsc();
+    return gameService.findTop10ByOrderByPriceAsc();
   }
 
   @GetMapping("/search")
   public List<Game> searchGames(@RequestParam String keyword) {
-    return gameRepository.findByNameContainingIgnoreCase(keyword);
+    return gameService.findByNameContainingIgnoreCase(keyword);
   }
 }

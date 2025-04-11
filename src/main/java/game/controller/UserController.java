@@ -11,7 +11,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/users")
-@CrossOrigin(origins = "http://localhost:8080")  // 允许前端跨域访问
+@CrossOrigin(origins = "http://localhost:8080")
 public class UserController {
 
   @Autowired

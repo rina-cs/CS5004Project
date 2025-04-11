@@ -1,7 +1,8 @@
 package game.service;
 
 import game.model.User;
-import game.repository.UserRepository;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -11,40 +12,78 @@ import java.util.Optional;
 @Service
 public class UserService {
 
+  private static final String USERS_FILE = "users.json";
+  private final AtomicLong idGenerator = new AtomicLong(1);
+
   @Autowired
-  private UserRepository userRepository;
+  private FileStorageService fileStorageService;
+
+  public UserService(FileStorageService fileStorageService) {
+    this.fileStorageService = fileStorageService;
+    initializeIdGenerator();
+  }
+
+  private void initializeIdGenerator() {
+    List<User> users = getAllUsers();
+    if(!users.isEmpty()) {
+      long maxId = users.stream().mapToLong(user -> user.getId()).max().getAsLong();
+      idGenerator.set(maxId+1);
+    }
+  }
 
   // Create User
   public User createUser(User user) {
-    return userRepository.save(user);
+    List<User> users = getAllUsers();
+
+    if(user.getId()==null){
+      user.setId(idGenerator.getAndIncrement());
+    }
+    users.add(user);
+    fileStorageService.writeList(USERS_FILE, users);
+    return user;
   }
 
   // Get User by ID
   public Optional<User> getUserById(Long id) {
-    return userRepository.findById(id);
+    return getAllUsers().stream().filter(user -> user.getId().equals(id)).findFirst();
   }
 
   // Get All Users
   public List<User> getAllUsers() {
-    return userRepository.findAll();
+    return fileStorageService.readList(USERS_FILE,User.class);
   }
 
   // Update User
   public User updateUser(Long id, User newUserDetails) {
-    return userRepository.findById(id).map(user -> {
-      user.setUsername(newUserDetails.getUsername());
-      user.setEmail(newUserDetails.getEmail());
-      user.setPassword(newUserDetails.getPassword());
-      return userRepository.save(user);
-    }).orElseThrow(() -> new RuntimeException("User not found"));
+    List<User> users = getAllUsers();
+
+    for (int i = 0; i < users.size(); i++) {
+      User user = users.get(i);
+      if(user.getId().equals(id)) {
+        user.setUsername(newUserDetails.getUsername());
+        user.setPassword(newUserDetails.getPassword());
+        user.setEmail(newUserDetails.getEmail());
+        users.set(i,user);
+        fileStorageService.writeList(USERS_FILE, users);
+        return user;
+      }
+    }
+    throw new RuntimeException("User not found");
   }
 
   // Delete User
   public void deleteUser(Long id) {
-    userRepository.deleteById(id);
+    List<User> users = getAllUsers();
+    List<User> updatedUsers = users.stream().filter(user -> user.getId().equals(id)).collect(
+        Collectors.toList());
+    fileStorageService.writeList(USERS_FILE, updatedUsers);
   }
 
   public Optional<User> findByEmail(String email) {
-    return userRepository.findByEmail(email);
+    return getAllUsers().stream().filter(user -> user.getEmail().equals(email)).findFirst();
+  }
+
+  public Optional<User> findByUsername(String username) {
+    return getAllUsers().stream().filter(user -> user.getUsername().equals(username)).findFirst();
   }
 }
