@@ -3,269 +3,284 @@ package game.service;
 import game.model.Cart;
 import game.model.CartItem;
 import game.model.Game;
+import game.repository.CartRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class CartServiceTest {
+class CartServiceTest {
 
-  @Mock
-  private FileStorageService fileStorageService;
-
-  @InjectMocks
   private CartService cartService;
 
-  private Cart cart1;
-  private Cart cart2;
-  private Game game1;
-  private Game game2;
-  private CartItem item1;
-  private CartItem item2;
-  private List<Cart> cartList;
+  @Mock
+  private CartRepository cartRepository;
 
   @BeforeEach
-  public void setUp() {
-    // Initialize games
-    game1 = new Game();
-    game1.setId(1L);
-    game1.setName("Game 1");
-    game1.setPrice(29.99);
-    game1.setLikes(100);
-    game1.setImage("/image1.jpg");
+  void setUp() {
+    MockitoAnnotations.openMocks(this);
+    cartService = new CartService();
 
-    game2 = new Game();
-    game2.setId(2L);
-    game2.setName("Game 2");
-    game2.setPrice(19.99);
-    game2.setLikes(200);
-    game2.setImage("/image2.jpg");
-
-    // Initialize cart items
-    item1 = new CartItem();
-    item1.setId(1L);
-    item1.setGameId(game1.getId());
-    item1.setGameName(game1.getName());
-    item1.setPrice(game1.getPrice());
-    item1.setQuantity(1);
-
-    item2 = new CartItem();
-    item2.setId(2L);
-    item2.setGameId(game2.getId());
-    item2.setGameName(game2.getName());
-    item2.setPrice(game2.getPrice());
-    item2.setQuantity(1);
-
-    // Initialize carts
-    cart1 = new Cart();
-    cart1.setId(1L);
-    cart1.setUserId(1L);
-    cart1.setItems(new ArrayList<>(Arrays.asList(item1)));
-    item1.setCart(cart1);
-
-    cart2 = new Cart();
-    cart2.setId(2L);
-    cart2.setUserId(2L);
-    cart2.setItems(new ArrayList<>(Arrays.asList(item2)));
-    item2.setCart(cart2);
-
-    cartList = Arrays.asList(cart1, cart2);
+    try {
+      java.lang.reflect.Field field = CartService.class.getDeclaredField("cartRepository");
+      field.setAccessible(true);
+      field.set(cartService, cartRepository);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Test
-  public void testGetAllCarts() {
-    // Given
-    when(fileStorageService.readList(anyString(), eq(Cart.class))).thenReturn(cartList);
+  void findByUserId() {
+    Cart cart = new Cart();
+    cart.setId(1L);
+    cart.setUserId(101L);
 
-    // When
-    List<Cart> result = cartService.getAllCarts();
+    when(cartRepository.findByUserId(101L)).thenReturn(Optional.of(cart));
+    when(cartRepository.findByUserId(102L)).thenReturn(Optional.empty());
 
-    // Then
-    assertEquals(2, result.size());
-    assertEquals(cart1.getId(), result.get(0).getId());
-    assertEquals(cart2.getId(), result.get(1).getId());
-    verify(fileStorageService, atLeast(1)).readList("carts.json", Cart.class);
+    Optional<Cart> found = cartService.findByUserId(101L);
+    Optional<Cart> notFound = cartService.findByUserId(102L);
+
+    assertTrue(found.isPresent());
+    assertEquals(1L, found.get().getId());
+    assertFalse(notFound.isPresent());
+
+    verify(cartRepository).findByUserId(101L);
+    verify(cartRepository).findByUserId(102L);
   }
 
   @Test
-  public void testFindByUserId() {
-    // Given
-    when(fileStorageService.readList(anyString(), eq(Cart.class))).thenReturn(cartList);
+  void save() {
+    Cart cartToSave = new Cart();
+    cartToSave.setUserId(101L);
 
-    // When
-    Optional<Cart> result = cartService.findByUserId(1L);
+    Cart savedCart = new Cart();
+    savedCart.setId(1L);
+    savedCart.setUserId(101L);
 
-    // Then
-    assertTrue(result.isPresent());
-    assertEquals(cart1.getId(), result.get().getId());
-    assertEquals(cart1.getUserId(), result.get().getUserId());
-    verify(fileStorageService, atLeast(1)).readList("carts.json", Cart.class);
+    when(cartRepository.save(any(Cart.class))).thenReturn(savedCart);
+
+    Cart result = cartService.save(cartToSave);
+
+    assertNotNull(result);
+    assertEquals(1L, result.getId());
+    assertEquals(101L, result.getUserId());
+
+    verify(cartRepository).save(cartToSave);
   }
 
   @Test
-  public void testFindByUserIdNotFound() {
-    // Given
-    when(fileStorageService.readList(anyString(), eq(Cart.class))).thenReturn(cartList);
+  void getOrCreateCartForUser_existingCart() {
+    Cart existingCart = new Cart();
+    existingCart.setId(1L);
+    existingCart.setUserId(101L);
 
-    // When
-    Optional<Cart> result = cartService.findByUserId(3L);
+    when(cartRepository.findByUserId(101L)).thenReturn(Optional.of(existingCart));
 
-    // Then
-    assertFalse(result.isPresent());
-    verify(fileStorageService, atLeast(1)).readList("carts.json", Cart.class);
+    Cart result = cartService.getOrCreateCartForUser(101L);
+
+    assertEquals(1L, result.getId());
+    assertEquals(101L, result.getUserId());
+
+    verify(cartRepository).findByUserId(101L);
+    verify(cartRepository, never()).save(any(Cart.class));
   }
 
   @Test
-  public void testSave() {
-    // Given
+  void getOrCreateCartForUser_newCart() {
+    when(cartRepository.findByUserId(102L)).thenReturn(Optional.empty());
+
     Cart newCart = new Cart();
-    newCart.setUserId(3L);
-    newCart.setItems(new ArrayList<>());
+    newCart.setId(2L);
+    newCart.setUserId(102L);
 
-    List<Cart> mutableCartList = new ArrayList<>(cartList);
-    when(fileStorageService.readList(anyString(), eq(Cart.class))).thenReturn(mutableCartList);
-    doNothing().when(fileStorageService).writeList(anyString(), anyList());
+    when(cartRepository.save(any(Cart.class))).thenReturn(newCart);
 
-    // When
-    Cart result = cartService.save(newCart);
+    Cart result = cartService.getOrCreateCartForUser(102L);
 
-    // Then
-    assertNotNull(result.getId());
-    assertEquals(3L, result.getUserId());
-    verify(fileStorageService, atLeast(1)).readList("carts.json", Cart.class);
-    verify(fileStorageService, times(1)).writeList(eq("carts.json"), anyList());
+    assertEquals(2L, result.getId());
+    assertEquals(102L, result.getUserId());
+    assertNotNull(result.getItems());
+
+    verify(cartRepository).findByUserId(102L);
+    verify(cartRepository).save(any(Cart.class));
   }
 
   @Test
-  public void testGetOrCreateCartForUserExists() {
-    // Given
-    when(fileStorageService.readList(anyString(), eq(Cart.class))).thenReturn(cartList);
+  void addItemToCart_newItem() {
+    Cart cart = new Cart();
+    cart.setId(1L);
+    cart.setUserId(101L);
+    cart.setItems(new ArrayList<>());
 
-    // When
-    Cart result = cartService.getOrCreateCartForUser(1L);
+    Game game = new Game();
+    game.setId(201L);
+    game.setName("Test Game");
+    game.setPrice(19.99);
 
-    // Then
-    assertEquals(cart1.getId(), result.getId());
-    assertEquals(cart1.getUserId(), result.getUserId());
-    verify(fileStorageService, atLeast(1)).readList("carts.json", Cart.class);
+    when(cartRepository.findByUserId(101L)).thenReturn(Optional.of(cart));
+    when(cartRepository.save(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+    Cart updatedCart = cartService.addItemToCart(101L, game);
+
+    assertEquals(1, updatedCart.getItems().size());
+    assertEquals(201L, updatedCart.getItems().get(0).getGameId());
+    assertEquals("Test Game", updatedCart.getItems().get(0).getGameName());
+    assertEquals(19.99, updatedCart.getItems().get(0).getPrice());
+
+    verify(cartRepository).findByUserId(101L);
+    verify(cartRepository).save(any(Cart.class));
   }
 
   @Test
-  public void testGetOrCreateCartForUserNew() {
-    // Given
-    when(fileStorageService.readList(anyString(), eq(Cart.class))).thenReturn(cartList);
-    doNothing().when(fileStorageService).writeList(anyString(), anyList());
+  void addItemToCart_existingItem() {
+    Cart cart = new Cart();
+    cart.setId(1L);
+    cart.setUserId(101L);
 
-    // When
-    Cart result = cartService.getOrCreateCartForUser(3L);
+    CartItem existingItem = new CartItem();
+    existingItem.setGameId(201L);
+    existingItem.setGameName("Test Game");
+    existingItem.setPrice(19.99);
 
-    // Then
-    assertNotNull(result.getId());
-    assertEquals(3L, result.getUserId());
-    verify(fileStorageService, atLeast(1)).readList("carts.json", Cart.class);
-    verify(fileStorageService, times(1)).writeList(eq("carts.json"), anyList());
+    cart.setItems(new ArrayList<>());
+    cart.getItems().add(existingItem);
+
+    Game game = new Game();
+    game.setId(201L);
+    game.setName("Test Game");
+    game.setPrice(19.99);
+
+    when(cartRepository.findByUserId(101L)).thenReturn(Optional.of(cart));
+
+    Cart result = cartService.addItemToCart(101L, game);
+
+    assertEquals(1, result.getItems().size()); // No new item should be added
+
+    verify(cartRepository).findByUserId(101L);
+    verify(cartRepository, never()).save(any(Cart.class));
   }
 
   @Test
-  public void testAddItemToCart() {
-    // Given
-    when(fileStorageService.readList(anyString(), eq(Cart.class))).thenReturn(cartList);
-    doNothing().when(fileStorageService).writeList(anyString(), anyList());
+  void removeItemFromCart() {
+    Cart cart = new Cart();
+    cart.setId(1L);
+    cart.setUserId(101L);
 
-    // When
-    Cart result = cartService.addItemToCart(1L, game2);
+    CartItem item1 = new CartItem();
+    item1.setGameId(201L);
 
-    // Then
-    assertEquals(2, result.getItems().size());
-    assertTrue(result.containsGame(game2.getId()));
-    verify(fileStorageService, atLeast(1)).readList("carts.json", Cart.class);
-    verify(fileStorageService, times(1)).writeList(eq("carts.json"), anyList());
+    CartItem item2 = new CartItem();
+    item2.setGameId(202L);
+
+    cart.setItems(new ArrayList<>());
+    cart.getItems().add(item1);
+    cart.getItems().add(item2);
+
+    when(cartRepository.findByUserId(101L)).thenReturn(Optional.of(cart));
+    when(cartRepository.save(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+    Cart updatedCart = cartService.removeItemFromCart(101L, 201L);
+
+    assertEquals(1, updatedCart.getItems().size());
+    assertEquals(202L, updatedCart.getItems().get(0).getGameId());
+
+    verify(cartRepository).findByUserId(101L);
+    verify(cartRepository).save(any(Cart.class));
   }
 
   @Test
-  public void testAddItemToCartAlreadyExists() {
-    // Given
-    when(fileStorageService.readList(anyString(), eq(Cart.class))).thenReturn(cartList);
+  void removeItemFromCart_cartNotFound() {
+    when(cartRepository.findByUserId(101L)).thenReturn(Optional.empty());
 
-    // When
-    Cart result = cartService.addItemToCart(1L, game1);
+    assertThrows(RuntimeException.class, () -> {
+      cartService.removeItemFromCart(101L, 201L);
+    });
 
-    // Then
-    assertEquals(1, result.getItems().size());
-    verify(fileStorageService, atLeast(1)).readList("carts.json", Cart.class);
+    verify(cartRepository).findByUserId(101L);
+    verify(cartRepository, never()).save(any(Cart.class));
   }
 
   @Test
-  public void testRemoveItemFromCart() {
-    // Given
-    List<Cart> mutableCartList = new ArrayList<>();
-    mutableCartList.add(cart1);
-    mutableCartList.add(cart2);
+  void clearCart() {
+    Cart cart = new Cart();
+    cart.setId(1L);
+    cart.setUserId(101L);
 
-    when(fileStorageService.readList(anyString(), eq(Cart.class))).thenReturn(mutableCartList);
-    doNothing().when(fileStorageService).writeList(anyString(), anyList());
+    CartItem item = new CartItem();
+    item.setGameId(201L);
 
-    // When
-    Cart result = cartService.removeItemFromCart(1L, game1.getId());
+    cart.setItems(new ArrayList<>());
+    cart.getItems().add(item);
 
-    // Then
-    assertEquals(0, result.getItems().size());
-    verify(fileStorageService, atLeast(1)).readList("carts.json", Cart.class);
-    verify(fileStorageService, times(1)).writeList(eq("carts.json"), anyList());
+    when(cartRepository.findByUserId(101L)).thenReturn(Optional.of(cart));
+    when(cartRepository.save(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+    cartService.clearCart(101L);
+
+    assertTrue(cart.getItems().isEmpty());
+
+    verify(cartRepository).findByUserId(101L);
+    verify(cartRepository).save(cart);
   }
 
   @Test
-  public void testClearCart() {
-    // Given
-    List<Cart> mutableCartList = new ArrayList<>();
-    mutableCartList.add(cart1);
-    mutableCartList.add(cart2);
+  void clearCart_cartNotFound() {
+    when(cartRepository.findByUserId(101L)).thenReturn(Optional.empty());
 
-    when(fileStorageService.readList(anyString(), eq(Cart.class))).thenReturn(mutableCartList);
-    doNothing().when(fileStorageService).writeList(anyString(), anyList());
+    assertThrows(RuntimeException.class, () -> {
+      cartService.clearCart(101L);
+    });
 
-    // When
-    cartService.clearCart(1L);
-
-    // Then
-    verify(fileStorageService, atLeast(1)).readList("carts.json", Cart.class);
-    verify(fileStorageService, times(1)).writeList(eq("carts.json"), anyList());
+    verify(cartRepository).findByUserId(101L);
+    verify(cartRepository, never()).save(any(Cart.class));
   }
 
   @Test
-  public void testGetCartTotal() {
-    // Given
-    when(fileStorageService.readList(anyString(), eq(Cart.class))).thenReturn(cartList);
+  void getCartTotal() {
+    Cart cart = new Cart();
+    cart.setId(1L);
+    cart.setUserId(101L);
 
-    // When
-    double result = cartService.getCartTotal(1L);
+    CartItem item1 = new CartItem();
+    item1.setPrice(10.0);
 
-    // Then
-    assertEquals(29.99, result, 0.01);
-    verify(fileStorageService, atLeast(1)).readList("carts.json", Cart.class);
+    CartItem item2 = new CartItem();
+    item2.setPrice(20.0);
+
+    cart.setItems(new ArrayList<>());
+    cart.getItems().add(item1);
+    cart.getItems().add(item2);
+
+    when(cartRepository.findByUserId(101L)).thenReturn(Optional.of(cart));
+
+    double total = cartService.getCartTotal(101L);
+
+    assertEquals(30.0, total);
+
+    verify(cartRepository).findByUserId(101L);
   }
 
   @Test
-  public void testGetCartTotalNotFound() {
-    // Given
-    when(fileStorageService.readList(anyString(), eq(Cart.class))).thenReturn(cartList);
+  void getCartTotal_cartNotFound() {
+    when(cartRepository.findByUserId(101L)).thenReturn(Optional.empty());
 
-    // When
-    double result = cartService.getCartTotal(3L);
+    double total = cartService.getCartTotal(101L);
 
-    // Then
-    assertEquals(0.0, result, 0.01);
-    verify(fileStorageService, atLeast(1)).readList("carts.json", Cart.class);
+    assertEquals(0.0, total);
+
+    verify(cartRepository).findByUserId(101L);
   }
 }

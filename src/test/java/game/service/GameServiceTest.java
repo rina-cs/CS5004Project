@@ -1,245 +1,210 @@
 package game.service;
 
 import game.model.Game;
+import game.repository.GameRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.context.SpringBootTest;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class GameServiceTest {
+class GameServiceTest {
 
-  @Mock
-  private FileStorageService fileStorageService;
-
-  @InjectMocks
   private GameService gameService;
 
-  private Game game1;
-  private Game game2;
-  private List<Game> gameList;
+  @Mock
+  private GameRepository gameRepository;
 
   @BeforeEach
-  public void setUp() {
-    // Initialize test data
-    game1 = new Game();
+  void setUp() {
+    MockitoAnnotations.openMocks(this);
+    gameService = new GameService();
+
+    // 使用反射设置私有字段
+    try {
+      java.lang.reflect.Field field = GameService.class.getDeclaredField("gameRepository");
+      field.setAccessible(true);
+      field.set(gameService, gameRepository);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Test
+  void getAllGames() {
+    Game game1 = new Game();
     game1.setId(1L);
     game1.setName("Game 1");
-    game1.setPrice(29.99);
-    game1.setLikes(100);
-    game1.setImage("/image1.jpg");
 
-    game2 = new Game();
+    Game game2 = new Game();
     game2.setId(2L);
     game2.setName("Game 2");
-    game2.setPrice(19.99);
-    game2.setLikes(200);
-    game2.setImage("/image2.jpg");
 
-    gameList = Arrays.asList(game1, game2);
+    List<Game> expectedGames = Arrays.asList(game1, game2);
+
+    when(gameRepository.findAll()).thenReturn(expectedGames);
+
+    List<Game> actualGames = gameService.getAllGames();
+
+    assertEquals(2, actualGames.size());
+    assertEquals("Game 1", actualGames.get(0).getName());
+    assertEquals("Game 2", actualGames.get(1).getName());
+
+    verify(gameRepository).findAll();
   }
 
   @Test
-  public void testGetAllGames() {
-    // Given
-    when(fileStorageService.readList(anyString(), eq(Game.class))).thenReturn(gameList);
+  void addGame() {
+    Game gameToAdd = new Game();
+    gameToAdd.setName("New Game");
 
-    // When
-    List<Game> result = gameService.getAllGames();
+    Game savedGame = new Game();
+    savedGame.setId(1L);
+    savedGame.setName("New Game");
 
-    // Then
-    assertEquals(2, result.size());
-    assertEquals(game1.getId(), result.get(0).getId());
-    assertEquals(game2.getId(), result.get(1).getId());
-    verify(fileStorageService, times(2)).readList("games.json", Game.class);
-  }
+    when(gameRepository.save(any(Game.class))).thenReturn(savedGame);
 
-  @Test
-  public void testAddGame() {
-    // Given
-    Game newGame = new Game();
-    newGame.setName("New Game");
-    newGame.setPrice(39.99);
-    newGame.setLikes(0);
-    newGame.setImage("/new-image.jpg");
+    Game result = gameService.addGame(gameToAdd);
 
-    List<Game> existingGames = new ArrayList<>(gameList);
-    when(fileStorageService.readList(anyString(), eq(Game.class))).thenReturn(existingGames);
-    doNothing().when(fileStorageService).writeList(anyString(), anyList());
-
-    // When
-    Game result = gameService.addGame(newGame);
-
-    // Then
-    assertNotNull(result.getId());
+    assertNotNull(result);
+    assertEquals(1L, result.getId());
     assertEquals("New Game", result.getName());
-    verify(fileStorageService, times(2)).readList("games.json", Game.class);
-    verify(fileStorageService, times(1)).writeList(eq("games.json"), anyList());
+
+    verify(gameRepository).save(gameToAdd);
   }
 
   @Test
-  public void testGetGameById() {
-    // Given
-    when(fileStorageService.readList(anyString(), eq(Game.class))).thenReturn(gameList);
+  void getGameById() {
+    Game game = new Game();
+    game.setId(1L);
+    game.setName("Test Game");
 
-    // When
-    Optional<Game> result = gameService.getGameById(1L);
+    when(gameRepository.findById(1L)).thenReturn(Optional.of(game));
+    when(gameRepository.findById(2L)).thenReturn(Optional.empty());
 
-    // Then
-    assertTrue(result.isPresent());
-    assertEquals(game1.getId(), result.get().getId());
-    assertEquals(game1.getName(), result.get().getName());
-    verify(fileStorageService, times(2)).readList("games.json", Game.class);
+    Optional<Game> found = gameService.getGameById(1L);
+    Optional<Game> notFound = gameService.getGameById(2L);
+
+    assertTrue(found.isPresent());
+    assertEquals("Test Game", found.get().getName());
+    assertFalse(notFound.isPresent());
+
+    verify(gameRepository).findById(1L);
+    verify(gameRepository).findById(2L);
   }
 
   @Test
-  public void testGetGameByIdNotFound() {
-    // Given
-    when(fileStorageService.readList(anyString(), eq(Game.class))).thenReturn(gameList);
+  void getGameByName() {
+    Game game1 = new Game();
+    game1.setId(1L);
+    game1.setName("Specific Game");
 
-    // When
-    Optional<Game> result = gameService.getGameById(3L);
+    Game game2 = new Game();
+    game2.setId(2L);
+    game2.setName("Another Game");
 
-    // Then
-    assertFalse(result.isPresent());
-    verify(fileStorageService, times(2)).readList("games.json", Game.class);
+    List<Game> allGames = Arrays.asList(game1, game2);
+
+    when(gameRepository.findAll()).thenReturn(allGames);
+
+    Optional<Game> found = gameService.getGameByName("Specific Game");
+    Optional<Game> notFound = gameService.getGameByName("Non-existent Game");
+
+    assertTrue(found.isPresent());
+    assertEquals(1L, found.get().getId());
+    assertFalse(notFound.isPresent());
+
+    verify(gameRepository, times(2)).findAll();
   }
 
   @Test
-  public void testGetGameByName() {
-    // Given
-    when(fileStorageService.readList(anyString(), eq(Game.class))).thenReturn(gameList);
+  void deleteGame() {
+    doNothing().when(gameRepository).deleteById(1L);
 
-    // When
-    Optional<Game> result = gameService.getGameByName("Game 1");
-
-    // Then
-    assertTrue(result.isPresent());
-    assertEquals(game1.getId(), result.get().getId());
-    assertEquals(game1.getName(), result.get().getName());
-    verify(fileStorageService, times(2)).readList("games.json", Game.class);
-  }
-
-  @Test
-  public void testDeleteGame() {
-    // Given
-    List<Game> existingGames = new ArrayList<>(gameList);
-    when(fileStorageService.readList(anyString(), eq(Game.class))).thenReturn(existingGames);
-    doNothing().when(fileStorageService).writeList(anyString(), anyList());
-
-    // When
     gameService.deleteGame(1L);
 
-    // Then
-    verify(fileStorageService, times(2)).readList("games.json", Game.class);
-    verify(fileStorageService, times(1)).writeList(eq("games.json"), anyList());
+    verify(gameRepository).deleteById(1L);
   }
 
   @Test
-  public void testUpdateGame() {
-    // Given
-    Game updatedGame = new Game();
-    updatedGame.setId(1L);
-    updatedGame.setName("Updated Game");
-    updatedGame.setPrice(49.99);
-    updatedGame.setLikes(150);
-    updatedGame.setImage("/updated-image.jpg");
+  void updateGame() {
+    Game gameToUpdate = new Game();
+    gameToUpdate.setId(1L);
+    gameToUpdate.setName("Updated Game");
 
-    List<Game> existingGames = new ArrayList<>(gameList);
-    when(fileStorageService.readList(anyString(), eq(Game.class))).thenReturn(existingGames);
-    doNothing().when(fileStorageService).writeList(anyString(), anyList());
+    when(gameRepository.save(gameToUpdate)).thenReturn(gameToUpdate);
 
-    // When
-    Game result = gameService.updateGame(updatedGame);
+    Game result = gameService.updateGame(gameToUpdate);
 
-    // Then
-    assertEquals(1L, result.getId());
     assertEquals("Updated Game", result.getName());
-    assertEquals(49.99, result.getPrice(), 0.01);
-    assertEquals(150, result.getLikes());
-    assertEquals("/updated-image.jpg", result.getImage());
-    verify(fileStorageService, times(2)).readList("games.json", Game.class);
-    verify(fileStorageService, times(1)).writeList(eq("games.json"), anyList());
+    verify(gameRepository).save(gameToUpdate);
   }
 
   @Test
-  public void testFindByNameContainingIgnoreCase() {
-    // Given
-    Game game3 = new Game();
-    game3.setId(3L);
-    game3.setName("Another Game");
-    game3.setPrice(39.99);
-    game3.setLikes(50);
-    game3.setImage("/image3.jpg");
+  void findByNameContainingIgnoreCase() {
+    Game game1 = new Game();
+    game1.setName("Game with Keyword");
 
-    List<Game> allGames = new ArrayList<>(gameList);
-    allGames.add(game3);
+    List<Game> expectedGames = Arrays.asList(game1);
 
-    when(fileStorageService.readList(anyString(), eq(Game.class))).thenReturn(allGames);
+    when(gameRepository.findByNameContainingIgnoreCase("keyword")).thenReturn(expectedGames);
 
-    // When
-    List<Game> result = gameService.findByNameContainingIgnoreCase("game");
+    List<Game> result = gameService.findByNameContainingIgnoreCase("keyword");
 
-    // Then
-    assertEquals(3, result.size());
-    verify(fileStorageService, times(2)).readList("games.json", Game.class);
+    assertEquals(1, result.size());
+    assertEquals("Game with Keyword", result.get(0).getName());
+
+    verify(gameRepository).findByNameContainingIgnoreCase("keyword");
   }
 
   @Test
-  public void testFindTop10ByOrderByLikesDesc() {
-    // Given
-    List<Game> manyGames = new ArrayList<>();
-    for (int i = 1; i <= 15; i++) {
-      Game game = new Game();
-      game.setId((long) i);
-      game.setName("Game " + i);
-      game.setLikes(i * 10);
-      manyGames.add(game);
-    }
+  void findTop10ByOrderByLikesDesc() {
+    Game game1 = new Game();
+    game1.setLikes(100);
 
-    when(fileStorageService.readList(anyString(), eq(Game.class))).thenReturn(manyGames);
+    Game game2 = new Game();
+    game2.setLikes(50);
 
-    // When
+    List<Game> expectedGames = Arrays.asList(game1, game2);
+
+    when(gameRepository.findTop10ByOrderByLikesDesc()).thenReturn(expectedGames);
+
     List<Game> result = gameService.findTop10ByOrderByLikesDesc();
 
-    // Then
-    assertEquals(10, result.size());
-    assertEquals(15L, result.get(0).getId());
-    assertEquals(14L, result.get(1).getId());
-    verify(fileStorageService, times(2)).readList("games.json", Game.class);
+    assertEquals(2, result.size());
+    assertEquals(100, result.get(0).getLikes());
+
+    verify(gameRepository).findTop10ByOrderByLikesDesc();
   }
 
   @Test
-  public void testFindTop10ByOrderByPriceAsc() {
-    // Given
-    List<Game> manyGames = new ArrayList<>();
-    for (int i = 1; i <= 15; i++) {
-      Game game = new Game();
-      game.setId((long) i);
-      game.setName("Game " + i);
-      game.setPrice(50 - i);
-      manyGames.add(game);
-    }
+  void findTop10ByOrderByPriceAsc() {
+    Game game1 = new Game();
+    game1.setPrice(19.99);
 
-    when(fileStorageService.readList(anyString(), eq(Game.class))).thenReturn(manyGames);
+    Game game2 = new Game();
+    game2.setPrice(29.99);
 
-    // When
+    List<Game> expectedGames = Arrays.asList(game1, game2);
+
+    when(gameRepository.findTop10ByOrderByPriceAsc()).thenReturn(expectedGames);
+
     List<Game> result = gameService.findTop10ByOrderByPriceAsc();
 
-    // Then
-    assertEquals(10, result.size());
-    assertEquals(15L, result.get(0).getId());
-    assertEquals(14L, result.get(1).getId());
-    verify(fileStorageService, times(2)).readList("games.json", Game.class);
+    assertEquals(2, result.size());
+    assertEquals(19.99, result.get(0).getPrice());
+
+    verify(gameRepository).findTop10ByOrderByPriceAsc();
   }
 }

@@ -3,70 +3,27 @@ package game.service;
 import game.model.Cart;
 import game.model.CartItem;
 import game.model.Game;
+import game.repository.CartRepository;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Service
 public class CartService {
 
-  private static final String CARTS_FILE = "carts.json";
-  private final AtomicLong cartIdGenerator = new AtomicLong(1);
-  private final AtomicLong itemIdGenerator = new AtomicLong(1);
-
   @Autowired
-  private FileStorageService fileStorageService;
+  private CartRepository cartRepository;
 
-  public CartService(FileStorageService fileStorageService) {
-    this.fileStorageService = fileStorageService;
-    initializeIdGenerator();
-  }
-
-  private void initializeIdGenerator() {
-    List<Cart> carts = getAllCarts();
-    if (!carts.isEmpty()){
-      long maxCartId = carts.stream().mapToLong(Cart::getId).max().orElse(0L);
-      itemIdGenerator.set(maxCartId+1);
-    }
-  }
-
-  public List<Cart> getAllCarts() {
-    return fileStorageService.readList(CARTS_FILE, Cart.class);
-  }
 
   public Optional<Cart> findByUserId(Long userId) {
-    return getAllCarts().stream()
-        .filter(cart -> cart.getUserId().equals(userId))
-        .findFirst();
+    return cartRepository.findByUserId(userId);
   }
   public Cart save(Cart cart) {
-    List<Cart> carts = getAllCarts();
-
-    if (cart.getId() == null) {
-      cart.setId(cartIdGenerator.getAndIncrement());
-    }
-
-    // Assign IDs to any new cart items
-    for (CartItem item : cart.getItems()) {
-      if (item.getId() == null) {
-        item.setId(itemIdGenerator.getAndIncrement());
-      }
-    }
-
-    // Remove existing cart with same ID if exists
-    List<Cart> updatedCarts = carts.stream()
-        .filter(c -> !c.getId().equals(cart.getId()))
-        .collect(Collectors.toList());
-
-    // Add the updated cart
-    updatedCarts.add(cart);
-    fileStorageService.writeList(CARTS_FILE, updatedCarts);
-
-    return cart;
+    return cartRepository.save(cart);
   }
 
   public Cart getOrCreateCartForUser(Long userId) {
