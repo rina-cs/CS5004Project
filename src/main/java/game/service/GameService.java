@@ -20,6 +20,8 @@ public class GameService {
   }
 
   public Game addGame(Game game) {
+    // Set ID to 0 to indicate a new game (since your repository checks for null)
+    game.setId(0L);
     return gameRepository.save(game);
   }
 

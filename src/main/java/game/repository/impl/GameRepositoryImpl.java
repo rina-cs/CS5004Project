@@ -53,15 +53,56 @@ public class GameRepositoryImpl implements GameRepository {
   public Game save(Game game) {
     List<Game> games = findAll();
 
-    if (game.getId() == null) {
-      game.setId(idGenerator.getAndIncrement());
+    // Check if this is a new game (ID is null or 0)
+    if (game.getId() == null || game.getId() == 0L) {
+      // Find the maximum existing ID and add 1
+      long maxId = games.stream()
+          .mapToLong(Game::getId)
+          .max()
+          .orElse(0L);
+      long newId = Math.max(maxId + 1, idGenerator.get());
+
+      // Update the ID generator to ensure no duplicates in the future
+      idGenerator.set(newId + 1);
+
+      // Set the new ID on the game
+      game.setId(newId);
+      System.out.println("Created NEW game with ID: " + newId);
     } else {
-      games = games.stream()
-          .filter(existingGame -> !existingGame.getId().equals(game.getId()))
-          .collect(Collectors.toList());
+      // Check if a game with this ID already exists
+      boolean idExists = games.stream()
+          .anyMatch(existingGame -> existingGame.getId().equals(game.getId()));
+
+      if (idExists) {
+        // This is an update to an existing game - remove the old version
+        games = games.stream()
+            .filter(existingGame -> !existingGame.getId().equals(game.getId()))
+            .collect(Collectors.toList());
+        System.out.println("Updating EXISTING game with ID: " + game.getId());
+      } else {
+        // This game has an ID set but it doesn't exist in our storage
+        // This might be a duplicate - assign a new ID to be safe
+        long maxId = games.stream()
+            .mapToLong(Game::getId)
+            .max()
+            .orElse(0L);
+        long newId = Math.max(maxId + 1, idGenerator.get());
+        idGenerator.set(newId + 1);
+        game.setId(newId);
+        System.out.println("Assigned new ID: " + newId + " to avoid duplicate");
+      }
     }
 
+    // Add the game
     games.add(game);
+
+    // Print all game IDs for debugging
+    System.out.println("Current games in repository after save:");
+    for (Game g : games) {
+      System.out.println("  Game ID: " + g.getId() + ", Name: " + g.getName());
+    }
+
+    // Save all games to file
     fileStorageService.writeList(GAMES_FILE, games);
     return game;
   }

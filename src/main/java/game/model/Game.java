@@ -1,16 +1,13 @@
 package game.model;
 
 public class Game {
-
   private Long id;
   private String name;
   private int likes;
   private double price;
   private String image;
 
-  public Long getId() {
-    return id;
-  }
+  public Long getId() {return id;}
 
   public void setId(Long id) {
     this.id = id;
@@ -47,4 +44,6 @@ public class Game {
   public void setImage(String image) {
     this.image = image;
   }
+
+
 }
