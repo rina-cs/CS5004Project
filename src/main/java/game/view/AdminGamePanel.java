@@ -36,7 +36,7 @@ public class AdminGamePanel extends JPanel {
   // Input fields for game details
   private JTextArea gameIdField;
   private JTextArea gameNameField;
-  private JSpinner likesSpinner;
+//  private JSpinner likesSpinner;
   private JTextArea priceField;
   private JTextArea imagePathField;
 
@@ -91,7 +91,7 @@ public class AdminGamePanel extends JPanel {
    */
   private void initializeComponents() {
     // Create table for games
-    String[] columns = {"ID", "Name", "Price", "Likes", "Image Path"};
+    String[] columns = {"ID", "Name", "Price", "Image Path"};
     tableModel = new DefaultTableModel(columns, 0) {
       @Override
       public boolean isCellEditable(int row, int column) {
@@ -109,7 +109,7 @@ public class AdminGamePanel extends JPanel {
           gameIdField.setText((String) tableModel.getValueAt(selectedRow, 0));
           gameNameField.setText((String) tableModel.getValueAt(selectedRow, 1));
           priceField.setText(tableModel.getValueAt(selectedRow, 2).toString());
-          likesSpinner.setValue(tableModel.getValueAt(selectedRow, 3));
+//          likesSpinner.setValue(tableModel.getValueAt(selectedRow, 3));
 
           // Image path could be null
           Object imagePath = tableModel.getValueAt(selectedRow, 4);
@@ -143,7 +143,7 @@ public class AdminGamePanel extends JPanel {
     gameNameField.setFocusable(true);
 
     // Create the likes spinner
-    likesSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 10000, 1));
+//    likesSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 10000, 1));
 
     priceField = new JTextArea(1, 10);
     priceField.setName("Price Field");
@@ -209,13 +209,13 @@ public class AdminGamePanel extends JPanel {
 
     // Set up focus traversal
     gameNameField.setNextFocusableComponent(priceField);
-    priceField.setNextFocusableComponent(likesSpinner);
+//    priceField.setNextFocusableComponent(likesSpinner);
     // Get the JSpinner's editor component and make it part of the focus cycle
-    Component spinnerEditor = likesSpinner.getEditor();
-    if (spinnerEditor instanceof JSpinner.DefaultEditor) {
-      ((JSpinner.DefaultEditor)spinnerEditor).getTextField().setNextFocusableComponent(imagePathField);
-    }
-    imagePathField.setNextFocusableComponent(addNewGameButton);
+//    Component spinnerEditor = likesSpinner.getEditor();
+//    if (spinnerEditor instanceof JSpinner.DefaultEditor) {
+//      ((JSpinner.DefaultEditor)spinnerEditor).getTextField().setNextFocusableComponent(imagePathField);
+//    }
+//    imagePathField.setNextFocusableComponent(addNewGameButton);
 
     // Add action listeners
     addNewGameButton.addActionListener(new ActionListener() {
@@ -299,12 +299,12 @@ public class AdminGamePanel extends JPanel {
     gbc.gridx = 1;
     formPanel.add(priceField, gbc);
 
-    gbc.gridx = 0;
-    gbc.gridy = 3;
-    formPanel.add(new JLabel("Likes:"), gbc);
+//    gbc.gridx = 0;
+//    gbc.gridy = 3;
+//    formPanel.add(new JLabel("Likes:"), gbc);
 
-    gbc.gridx = 1;
-    formPanel.add(likesSpinner, gbc);
+//    gbc.gridx = 1;
+//    formPanel.add(likesSpinner, gbc);
 
     gbc.gridx = 0;
     gbc.gridy = 4;
@@ -388,7 +388,7 @@ public class AdminGamePanel extends JPanel {
             game.getId().toString(), // Convert Long to String for display
             game.getName(),
             game.getPrice(),
-            game.getLikes(),
+//            game.getLikes(),
             game.getImage()
         });
       }
@@ -410,7 +410,7 @@ public class AdminGamePanel extends JPanel {
   private void clearFormFields() {
     gameIdField.setText("");
     gameNameField.setText("");
-    likesSpinner.setValue(0);
+//    likesSpinner.setValue(0);
     priceField.setText("0.0");
     imagePathField.setText("");
 
@@ -425,13 +425,13 @@ public class AdminGamePanel extends JPanel {
     try {
       String name = gameNameField.getText().trim();
       String priceText = priceField.getText().trim();
-      int likes = (Integer) likesSpinner.getValue();
+//      int likes = (Integer) likesSpinner.getValue();
       String imagePath = imagePathField.getText().trim();
 
       System.out.println("Creating new game with values:");
       System.out.println("Name: '" + name + "'");
       System.out.println("Price: '" + priceText + "'");
-      System.out.println("Likes: " + likes);
+//      System.out.println("Likes: " + likes);
       System.out.println("Image Path: '" + imagePath + "'");
 
       // Validate input
@@ -466,7 +466,7 @@ public class AdminGamePanel extends JPanel {
       Game game = new Game();
       game.setName(name);
       game.setPrice(price);
-      game.setLikes(likes);
+//      game.setLikes(likes);
       game.setImage(imagePath.isEmpty() ? null : imagePath);
 
       System.out.println("Game object created: " + game.getName() + ", sending to server...");
@@ -534,14 +534,14 @@ public class AdminGamePanel extends JPanel {
 
       String name = gameNameField.getText().trim();
       String priceText = priceField.getText().trim();
-      int likes = (Integer) likesSpinner.getValue();
+//      int likes = (Integer) likesSpinner.getValue();
       String imagePath = imagePathField.getText().trim();
 
       System.out.println("Updating game with values:");
       System.out.println("ID: '" + idText + "'");
       System.out.println("Name: '" + name + "'");
       System.out.println("Price: '" + priceText + "'");
-      System.out.println("Likes: " + likes);
+//      System.out.println("Likes: " + likes);
       System.out.println("Image Path: '" + imagePath + "'");
 
       // Validate input
@@ -580,7 +580,7 @@ public class AdminGamePanel extends JPanel {
         game.setId(id);
         game.setName(name);
         game.setPrice(price);
-        game.setLikes(likes);
+//        game.setLikes(likes);
         game.setImage(imagePath.isEmpty() ? null : imagePath);
 
         System.out.println("Updating game with ID: " + id);
