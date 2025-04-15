@@ -3,16 +3,20 @@ package game.view;
 import game.controller.GameController;
 import game.controller.UserController;
 import game.model.User;
-import org.springframework.http.ResponseEntity;
+import game.service.CartService;
+import game.service.GameService;
 
-import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import javax.swing.*;
+import java.awt.*;
+import org.springframework.http.ResponseEntity;
 
 public class MainWindow extends JFrame {
   private final UserController userController;
   private final GameController gameController;
+  private final CartService cartService;
+  private final GameService gameService;
 
   private JPanel mainPanel;
   private CardLayout cardLayout;
@@ -21,12 +25,15 @@ public class MainWindow extends JFrame {
   private AdminGamePanel adminGamePanel;
   private UserGamePanel userGamePanel;
   private GamePanel gamePanel;
+  private CartPanel cartPanel;
 
   private User currentUser;
 
-  public MainWindow(UserController userController, GameController gameController) {
+  public MainWindow(UserController userController, GameController gameController, CartService cartService, GameService gameService) {
     this.userController = userController;
     this.gameController = gameController;
+    this.cartService = cartService;
+    this.gameService = gameService;
 
     setTitle("Game Inventory Management System");
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -129,8 +136,13 @@ public class MainWindow extends JFrame {
   }
 
   private void createGamePanel() {
-    gamePanel = new GamePanel(gameController, this);
+    gamePanel = new GamePanel(gameController, cartService, currentUser, this);
     mainPanel.add(gamePanel, "gamePanel");
+  }
+
+  private void createCartPanel() {
+    cartPanel = new CartPanel(cartService, gameService, this);
+    mainPanel.add(cartPanel, "cartPanel");
   }
 
   private void attemptLogin(JTextField emailField, JPasswordField passwordField, JLabel statusLabel) {
@@ -193,6 +205,21 @@ public class MainWindow extends JFrame {
     cardLayout.show(mainPanel, "user");
   }
 
+  public void showGamePanel() {
+    cardLayout.show(mainPanel, "gamePanel");
+  }
+
+  public void showCartPanel() {
+    if (cartPanel == null) {
+      createCartPanel();
+    }
+    cardLayout.show(mainPanel, "cartPanel");
+  }
+
+  public User getCurrentUser() {
+    return currentUser;
+  }
+
   private void setupLayout() {
     getContentPane().add(mainPanel);
   }
@@ -200,9 +227,11 @@ public class MainWindow extends JFrame {
   public static void main(String[] args) {
     UserController userController = new UserController();
     GameController gameController = new GameController();
+    CartService cartService = new CartService();
+    GameService gameService = new GameService();
 
     SwingUtilities.invokeLater(() -> {
-      MainWindow mainWindow = new MainWindow(userController, gameController);
+      MainWindow mainWindow = new MainWindow(userController, gameController, cartService, gameService);
       mainWindow.setVisible(true);
     });
   }

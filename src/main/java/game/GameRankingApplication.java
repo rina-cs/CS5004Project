@@ -4,7 +4,10 @@ import game.controller.GameController;
 import game.controller.UserController;
 import game.model.User;
 import game.repository.UserRepository;
+import game.service.CartService;
+import game.service.GameService;
 import game.view.MainWindow;
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -16,7 +19,6 @@ import org.springframework.stereotype.Component;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Optional;
 
 @SpringBootApplication
 public class GameRankingApplication {
@@ -54,10 +56,14 @@ public class GameRankingApplication {
 
 		private final UserController userController;
 		private final GameController gameController;
+		private final CartService cartService;
+		private final GameService gameService;
 
-		public SwingUIStarter(UserController userController, GameController gameController) {
+		public SwingUIStarter(UserController userController, GameController gameController, CartService cartService, GameService gameService) {
 			this.userController = userController;
 			this.gameController = gameController;
+			this.cartService = cartService;
+			this.gameService = gameService;
 		}
 
 		@EventListener(ApplicationReadyEvent.class)
@@ -65,7 +71,7 @@ public class GameRankingApplication {
 			if (!GraphicsEnvironment.isHeadless()) {
 				SwingUtilities.invokeLater(() -> {
 					try {
-						MainWindow mainWindow = new MainWindow(userController, gameController);
+						MainWindow mainWindow = new MainWindow(userController, gameController, cartService, gameService);
 						mainWindow.setVisible(true);
 					} catch (Exception e) {
 						e.printStackTrace();
