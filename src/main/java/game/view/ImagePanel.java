@@ -1,5 +1,7 @@
 package game.view;
 
+import java.awt.image.BufferedImage;
+import java.nio.Buffer;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
@@ -42,8 +44,8 @@ class ImagePanel extends JPanel {
     super.paintComponent(g);
     if (image != null) {
       // Get the size of the panel
-      int panelWidth = getWidth();
-      int panelHeight = getHeight();
+      int panelWidth = 250;
+      int panelHeight = 180;
 
       // Get the size of the image
       int imageWidth = image.getWidth(null);
@@ -58,8 +60,24 @@ class ImagePanel extends JPanel {
       int newWidth = (int) (imageWidth * scale);
       int newHeight = (int) (imageHeight * scale);
 
-      // Draw the scaled image
-      g.drawImage(image, 0, 0, newWidth, newHeight, this);
+      // Calculate the position to center the image
+      int x = (panelWidth - newWidth) /2 ;
+      int y = (panelHeight - newHeight) / 2;
+
+      // Create a BufferedImage to hold the scaled image
+      BufferedImage scaledImage = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_ARGB);
+      Graphics2D g2d = scaledImage.createGraphics();
+      g2d.drawImage(image, 0, 0, newWidth, newHeight, null);
+      g2d.dispose();
+
+      // Create a BufferedImage to hold the cropped image
+      BufferedImage croppedImage = new BufferedImage(panelWidth, panelHeight, BufferedImage.TYPE_INT_ARGB);
+      g2d = croppedImage.createGraphics();
+      g2d.drawImage(scaledImage, x, y, null);
+      g2d.dispose();
+
+      // Draw the cropped image
+      g.drawImage(croppedImage, 0, 0, this);
     } else {
       // If the image is not loaded successfully, draw default text
       g.setColor(Color.RED);

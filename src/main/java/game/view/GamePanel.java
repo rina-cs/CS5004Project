@@ -19,6 +19,7 @@ public class GamePanel extends JPanel {
   private final CartService cartService;
   private final User currentUser;
   private final MainWindow mainWindow;
+  private final JPanel gamesGridPanel;
 
   public GamePanel(GameController gameController, CartService cartService, User currentUser, MainWindow mainWindow) {
     this.gameController = gameController;
@@ -50,9 +51,24 @@ public class GamePanel extends JPanel {
     add(topPanel, BorderLayout.NORTH);
 
     // Create a panel for game grid
-    JPanel gamesGridPanel = new JPanel(new GridLayout(0, 4, 20, 20));
+    gamesGridPanel = new JPanel(new GridLayout(0, 4, 20, 20));
     gamesGridPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-    add(gamesGridPanel, BorderLayout.CENTER);
+
+    // Wrap the gamesGridPanel in a JScrollPane
+    JScrollPane scrollPane = new JScrollPane(gamesGridPanel);
+    scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+    scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    // Manage the speed of scrolling
+    JScrollBar verticalScrollBar = scrollPane.getVerticalScrollBar();
+    verticalScrollBar.setUnitIncrement(16);
+    verticalScrollBar.setBlockIncrement(32);
+
+    JScrollBar horizontalScrollBar = scrollPane.getHorizontalScrollBar();
+    horizontalScrollBar.setUnitIncrement(16);
+    horizontalScrollBar.setBlockIncrement(32);
+
+    add(scrollPane, BorderLayout.CENTER);
 
     refreshGameList(gamesGridPanel);
   }
@@ -93,12 +109,6 @@ public class GamePanel extends JPanel {
     }
   }
 
-  // Overload the method to maintain compatibility with existing code
-  public void refreshGameList() {
-    JPanel gamesPanel = (JPanel) getComponent(1); // This gets the games grid panel
-    refreshGameList(gamesPanel);
-  }
-
   private JPanel createGamePanel(Game game) {
     JPanel panel = new JPanel(new BorderLayout(16, 16));
     panel.setBorder(BorderFactory.createLineBorder(Color.GRAY));
@@ -106,8 +116,8 @@ public class GamePanel extends JPanel {
     // Import Image
     String imagePath = game.getImage();
     ImagePanel imagePanel = new ImagePanel(imagePath);
-    imagePanel.setPreferredSize(new Dimension(150, 150));
-    panel.add(imagePanel, BorderLayout.CENTER);
+    imagePanel.setPreferredSize(new Dimension(250, 180));
+    imagePanel.setLayout(new BorderLayout());
 
     // Game details
     JPanel detailsPanel = new JPanel(new GridLayout(2, 1));
