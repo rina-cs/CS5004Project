@@ -156,7 +156,7 @@ public class GamePanel extends JPanel {
     JPanel priceAndButton = new JPanel(new BorderLayout());
     JLabel priceLabel = new JLabel("$ " + game.getPrice());
     priceLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
-    JButton addToCartButton = new JButton("Add to Cart");
+    JButton addToCartButton = new JButton("Add to Favorites");
     addToCartButton.addActionListener(e -> addToCart(game.getId()));
     priceAndButton.add(priceLabel, BorderLayout.WEST);
     priceAndButton.add(addToCartButton, BorderLayout.EAST);

@@ -1,1 +1,1 @@
-[{"id":1,"username":"admin","password":"CS5004","email":"admin@neu.com","admin":true,"favoriteGameIds":[]}]
+[{"id":1,"username":"admin","password":"CS5004","email":"admin@neu.com","admin":true,"favoriteGameIds":[]},{"id":2,"username":"user","password":"CS5004","email":"user@neu.edu","admin":false,"favoriteGameIds":[]}]

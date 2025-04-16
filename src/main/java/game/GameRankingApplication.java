@@ -48,6 +48,20 @@ public class GameRankingApplication {
 
 				System.out.println("Default admin user created with email: admin@neu.com and password: CS5004");
 			}
+
+			// Check if user exists
+			Optional<User> existingUser = userRepository.findByEmail("user@neu.edu");
+
+			if (existingUser.isEmpty()) {
+				User user = new User();
+				user.setUsername("user");
+				user.setEmail("user@neu.edu");
+				user.setPassword("CS5004");
+				user.setAdmin(false);
+
+				userRepository.save(user);
+				System.out.println("Default user created with email: user@neu.edu and password: CS5004");
+			}
 		};
 	}
 
