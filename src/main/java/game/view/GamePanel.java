@@ -103,43 +103,11 @@ public class GamePanel extends JPanel {
     JPanel panel = new JPanel(new BorderLayout(16, 16));
     panel.setBorder(BorderFactory.createLineBorder(Color.GRAY));
 
-    // 处理图片
+    // Import Image
     String imagePath = game.getImage();
-    JLabel imageLabel;
-
-    if (imagePath != null) {
-
-      try {
-        // 调试信息
-        System.out.println("尝试加载图片: " + imagePath);
-
-        File imageFile = new File(imagePath);
-        if (imageFile.exists()) {
-          ImageIcon icon = new ImageIcon(imageFile.getAbsolutePath());
-          imageLabel = new JLabel(icon, SwingConstants.CENTER);
-        } else {
-          // 尝试使用类加载器
-          URL imageUrl = getClass().getClassLoader().getResource(imagePath);
-          if (imageUrl != null) {
-            ImageIcon icon = new ImageIcon(imageUrl);
-            imageLabel = new JLabel(icon, SwingConstants.CENTER);
-          } else {
-            System.out.println("找不到图片文件: " + imagePath);
-            imageLabel = new JLabel("Image Not Found", SwingConstants.CENTER);
-          }
-        }
-      } catch (Exception e) {
-        System.err.println("图片加载失败: " + e.getMessage());
-        imageLabel = new JLabel("Error Loading Image", SwingConstants.CENTER);
-      }
-    } else {
-      // 如果图片路径为null
-      imageLabel = new JLabel("No Image Available", SwingConstants.CENTER);
-    }
-
-    // 设置一个标准大小以保持UI美观
-    imageLabel.setPreferredSize(new Dimension(150, 150));
-    panel.add(imageLabel, BorderLayout.CENTER);
+    ImagePanel imagePanel = new ImagePanel(imagePath);
+    imagePanel.setPreferredSize(new Dimension(150, 150));
+    panel.add(imagePanel, BorderLayout.CENTER);
 
     // Game details
     JPanel detailsPanel = new JPanel(new GridLayout(2, 1));
