@@ -51,7 +51,7 @@ public class GamePanel extends JPanel {
     add(topPanel, BorderLayout.NORTH);
 
     // Create a panel for game grid
-    gamesGridPanel = new JPanel(new GridLayout(0, 4, 20, 20));
+    gamesGridPanel = new JPanel(new GridLayout(0, 4, 10, 10));
     gamesGridPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
     // Wrap the gamesGridPanel in a JScrollPane
@@ -110,7 +110,9 @@ public class GamePanel extends JPanel {
   }
 
   private JPanel createGamePanel(Game game) {
-    JPanel panel = new JPanel(new BorderLayout(16, 16));
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.setPreferredSize(new Dimension(250, 280));
+    panel.setMaximumSize(new Dimension(250, 280));
     panel.setBorder(BorderFactory.createLineBorder(Color.GRAY));
 
     // Import Image

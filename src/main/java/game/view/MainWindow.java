@@ -196,7 +196,7 @@ public class MainWindow extends JFrame {
 
   public void showUserPanel() {
     if (userGamePanel == null) {
-      userGamePanel = new UserGamePanel(gameController, currentUser, this);
+      userGamePanel = new UserGamePanel(gameController, userController, currentUser, this);
       mainPanel.add(userGamePanel, "user");
     } else {
       userGamePanel.setCurrentUser(currentUser);

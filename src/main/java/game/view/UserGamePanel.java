@@ -1,9 +1,9 @@
 package game.view;
 
 import game.controller.GameController;
+import game.controller.UserController;
 import game.model.Game;
 import game.model.User;
-import org.springframework.http.ResponseEntity;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -12,18 +12,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 
-/**
- * UserGamePanel provides the interface for regular users to view games,
- * add games to favorites, and remove games from favorites.
- */
 public class UserGamePanel extends JPanel {
   private final GameController gameController;
+  private final UserController userController;
   private User currentUser;
   private final MainWindow mainWindow;
 
   // UI components
   private JTabbedPane tabbedPane;
-  private JTable allGamesTable;
+  private JPanel allGamesPanel;
   private JTable favoritesTable;
   private DefaultTableModel allGamesModel;
   private DefaultTableModel favoritesModel;
@@ -34,11 +31,9 @@ public class UserGamePanel extends JPanel {
   private JTextField searchField;
   private JButton searchButton;
 
-  /**
-   * Constructs the user panel with required dependencies
-   */
-  public UserGamePanel(GameController gameController, User user, MainWindow mainWindow) {
+  public UserGamePanel(GameController gameController, UserController userController, User user, MainWindow mainWindow) {
     this.gameController = gameController;
+    this.userController = userController;
     this.currentUser = user;
     this.mainWindow = mainWindow;
 
@@ -49,23 +44,18 @@ public class UserGamePanel extends JPanel {
     refreshGameList();
   }
 
-  /**
-   * Initialize UI components
-   */
   private void initializeComponents() {
     // Create tabbed pane
     tabbedPane = new JTabbedPane();
 
-    // Create table models
+    // Table models
     String[] columns = {"ID", "Name", "Price", "Likes", "Image"};
-
     allGamesModel = new DefaultTableModel(columns, 0) {
       @Override
       public boolean isCellEditable(int row, int column) {
         return false;
       }
     };
-
     favoritesModel = new DefaultTableModel(columns, 0) {
       @Override
       public boolean isCellEditable(int row, int column) {
@@ -73,84 +63,38 @@ public class UserGamePanel extends JPanel {
       }
     };
 
-    // Create tables
-    allGamesTable = new JTable(allGamesModel);
-    allGamesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
+    // Favorites table
     favoritesTable = new JTable(favoritesModel);
     favoritesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-    // Create search components
+    // Search
     searchField = new JTextField(20);
     searchButton = new JButton("Search");
 
-    // Create buttons
+    // Buttons
     addToFavoritesButton = new JButton("Add to Favorites");
     removeFromFavoritesButton = new JButton("Remove from Favorites");
     refreshButton = new JButton("Refresh");
     logoutButton = new JButton("Logout");
 
-    // Add action listeners
-    addToFavoritesButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        addToFavorites();
-      }
-    });
-
-    removeFromFavoritesButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        removeFromFavorites();
-      }
-    });
-
-    refreshButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        refreshGameList();
-      }
-    });
-
-    logoutButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        mainWindow.showLoginPanel();
-      }
-    });
-
-    searchButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        searchGames();
-      }
-    });
+    // Listeners
+    addToFavoritesButton.addActionListener(e -> addToFavorites());
+    removeFromFavoritesButton.addActionListener(e -> removeFromFavorites());
+    refreshButton.addActionListener(e -> refreshGameList());
+    logoutButton.addActionListener(e -> mainWindow.showLoginPanel());
+    searchButton.addActionListener(e -> searchGames());
   }
 
-  /**
-   * Set up the layout of the panel
-   */
   private void setupLayout() {
-    // Create all games panel
-    JPanel allGamesPanel = new JPanel(new BorderLayout());
+    // All Games panel
+    allGamesPanel = new JPanel(new GridLayout(0, 4, 10, 10));
+    allGamesPanel.setBorder(BorderFactory.createTitledBorder("All Games"));
 
-    // Add search panel at the top
-    JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    searchPanel.add(new JLabel("Search:"));
-    searchPanel.add(searchField);
-    searchPanel.add(searchButton);
-    allGamesPanel.add(searchPanel, BorderLayout.NORTH);
+    // Add scroll pane for All Games
+    JScrollPane allGamesScrollPane = new JScrollPane(allGamesPanel);
+    allGamesScrollPane.getVerticalScrollBar().setUnitIncrement(16); // Smooth scrolling
 
-    // Add table in the center
-    JScrollPane allGamesScrollPane = new JScrollPane(allGamesTable);
-    allGamesPanel.add(allGamesScrollPane, BorderLayout.CENTER);
-
-    // Add buttons at the bottom
-    JPanel allGamesButtonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    allGamesButtonPanel.add(addToFavoritesButton);
-    allGamesPanel.add(allGamesButtonPanel, BorderLayout.SOUTH);
-
-    // Create favorites panel
+    // Favorites panel
     JPanel favoritesPanel = new JPanel(new BorderLayout());
     JScrollPane favoritesScrollPane = new JScrollPane(favoritesTable);
     favoritesPanel.add(favoritesScrollPane, BorderLayout.CENTER);
@@ -159,96 +103,89 @@ public class UserGamePanel extends JPanel {
     favoritesButtonPanel.add(removeFromFavoritesButton);
     favoritesPanel.add(favoritesButtonPanel, BorderLayout.SOUTH);
 
-    // Add panels to tabbed pane
-    tabbedPane.addTab("All Games", allGamesPanel);
+    // Search panel
+    JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    searchPanel.add(new JLabel("Search:"));
+    searchPanel.add(searchField);
+    searchPanel.add(searchButton);
+
+    // Top panel with search and logout
+    JPanel topPanel = new JPanel(new BorderLayout());
+    topPanel.add(searchPanel, BorderLayout.CENTER);
+
+    // Logout button in the top right corner
+    JPanel logoutPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+    logoutPanel.add(logoutButton);
+    topPanel.add(logoutPanel, BorderLayout.EAST);
+
+    // Tabs
+    tabbedPane.addTab("All Games", allGamesScrollPane);
     tabbedPane.addTab("My Favorites", favoritesPanel);
 
-    // Create bottom button panel
+    // Bottom buttons
     JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
     bottomPanel.add(refreshButton);
-    bottomPanel.add(logoutButton);
 
-    // Add components to main panel
+    // Add to main panel
     add(new JLabel("Game Inventory - User View", JLabel.CENTER), BorderLayout.NORTH);
     add(tabbedPane, BorderLayout.CENTER);
     add(bottomPanel, BorderLayout.SOUTH);
+    add(topPanel, BorderLayout.NORTH);
   }
 
-  /**
-   * Refresh the game list in both tables
-   */
   public void refreshGameList() {
-    // Clear tables
-    allGamesModel.setRowCount(0);
-    favoritesModel.setRowCount(0);
-
-    // Get all games from controller
+    allGamesPanel.removeAll();
     List<Game> games = gameController.getAllGames();
 
-    // Add all games to the all games table
+    games.sort((g1, g2) -> Integer.compare(g2.getLikes(), g1.getLikes()));
+
     for (Game game : games) {
-      allGamesModel.addRow(new Object[]{
-          game.getId().toString(),
-          game.getName(),
-          game.getPrice(),
-          game.getLikes(),
-          game.getImage()
-      });
+      JPanel gamePanel = createGamePanel(game);
+      allGamesPanel.add(gamePanel);
     }
-
-    // TODO: When you implement the favorites functionality, populate the favorites table
-    // This would require additional methods in your User and UserController classes
-
-    // For now, we'll just display a message
-    if (favoritesModel.getRowCount() == 0) {
-      favoritesModel.addRow(new Object[]{"", "No favorites yet", "", "", ""});
-    }
+    allGamesPanel.revalidate();
+    allGamesPanel.repaint();
   }
 
-  /**
-   * Search for games by name
-   */
-  private void searchGames() {
-    String keyword = searchField.getText().trim();
-    if (keyword.isEmpty()) {
-      refreshGameList();
-      return;
-    }
+  private JPanel createGamePanel(Game game) {
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.setPreferredSize(new Dimension(250, 280));
+    panel.setMaximumSize(new Dimension(250, 280));
+    panel.setBorder(BorderFactory.createLineBorder(Color.GRAY));
 
-    try {
-      List<Game> searchResults = gameController.searchGames(keyword);
+    // Image
+    String imagePath = game.getImage();
+    ImagePanel imagePanel = new ImagePanel(imagePath);
+    imagePanel.setPreferredSize(new Dimension(250, 180));
+    imagePanel.setLayout(new BorderLayout());
+    panel.add(imagePanel, BorderLayout.CENTER);
 
-      // Clear the all games table
-      allGamesModel.setRowCount(0);
+    // Details
+    JPanel detailsPanel = new JPanel(new GridLayout(2, 1));
+    JPanel nameAndLike = new JPanel(new BorderLayout());
+    JLabel nameLabel = new JLabel(game.getName());
+    nameLabel.setFont(new Font("Arial", Font.BOLD, 14));
+    nameLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
+    JLabel likeLabel = new JLabel("<html><font color='red'>❤</font> " + game.getLikes());
+    likeLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
+    nameAndLike.add(nameLabel, BorderLayout.WEST);
+    nameAndLike.add(likeLabel, BorderLayout.EAST);
+    detailsPanel.add(nameAndLike);
 
-      // Add search results to the table
-      for (Game game : searchResults) {
-        allGamesModel.addRow(new Object[]{
-            game.getId().toString(),
-            game.getName(),
-            game.getPrice(),
-            game.getLikes(),
-            game.getImage()
-        });
-      }
+    JPanel priceAndButton = new JPanel(new BorderLayout());
+    JLabel priceLabel = new JLabel("$ " + game.getPrice());
+    priceLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
+    JButton addToCartButton = new JButton("Add to Cart");
+    priceAndButton.add(priceLabel, BorderLayout.WEST);
+    priceAndButton.add(addToCartButton, BorderLayout.EAST);
+    detailsPanel.add(priceAndButton);
 
-      // Show a message if no results found
-      if (searchResults.isEmpty()) {
-        allGamesModel.addRow(new Object[]{"", "No games found matching '" + keyword + "'", "", "", ""});
-      }
-    } catch (Exception e) {
-      JOptionPane.showMessageDialog(this,
-          "Error searching for games: " + e.getMessage(),
-          "Search Error",
-          JOptionPane.ERROR_MESSAGE);
-    }
+    panel.add(detailsPanel, BorderLayout.SOUTH);
+    return panel;
   }
 
-  /**
-   * Add the selected game to favorites
-   */
   private void addToFavorites() {
-    int selectedRow = allGamesTable.getSelectedRow();
+    int selectedRow = allGamesPanel.getComponentCount() - 1;
     if (selectedRow == -1) {
       JOptionPane.showMessageDialog(this,
           "Please select a game to add to favorites",
@@ -256,25 +193,12 @@ public class UserGamePanel extends JPanel {
           JOptionPane.ERROR_MESSAGE);
       return;
     }
-
-    String gameId = (String) allGamesModel.getValueAt(selectedRow, 0);
-
-    // TODO: Implement adding to favorites functionality
-    // This requires additional methods in your User and UserController classes
-
     JOptionPane.showMessageDialog(this,
         "Adding to favorites is not implemented yet",
         "Not Implemented",
         JOptionPane.INFORMATION_MESSAGE);
-
-    // When implemented, it would be something like:
-    // userController.addGameToFavorites(currentUser.getId(), Long.parseLong(gameId));
-    // refreshGameList();
   }
 
-  /**
-   * Remove the selected game from favorites
-   */
   private void removeFromFavorites() {
     int selectedRow = favoritesTable.getSelectedRow();
     if (selectedRow == -1) {
@@ -284,30 +208,41 @@ public class UserGamePanel extends JPanel {
           JOptionPane.ERROR_MESSAGE);
       return;
     }
-
-    // Check if we have the dummy "No favorites" row
-    if (favoritesModel.getValueAt(selectedRow, 0).equals("")) {
-      return;
-    }
-
-    String gameId = (String) favoritesModel.getValueAt(selectedRow, 0);
-
-    // TODO: Implement removing from favorites functionality
-    // This requires additional methods in your User and UserController classes
-
     JOptionPane.showMessageDialog(this,
         "Removing from favorites is not implemented yet",
         "Not Implemented",
         JOptionPane.INFORMATION_MESSAGE);
-
-    // When implemented, it would be something like:
-    // userController.removeGameFromFavorites(currentUser.getId(), Long.parseLong(gameId));
-    // refreshGameList();
   }
 
-  /**
-   * Set the current user
-   */
+  private void searchGames() {
+    String keyword = searchField.getText().trim();
+    if (keyword.isEmpty()) {
+      refreshGameList();
+      return;
+    }
+    try {
+      List<Game> searchResults = gameController.searchGames(keyword);
+      allGamesPanel.removeAll();
+      for (Game game : searchResults) {
+        JPanel gamePanel = createGamePanel(game);
+        allGamesPanel.add(gamePanel);
+      }
+      allGamesPanel.revalidate();
+      allGamesPanel.repaint();
+      if (searchResults.isEmpty()) {
+        JOptionPane.showMessageDialog(this,
+            "No games found matching '" + keyword + "'",
+            "Search Error",
+            JOptionPane.ERROR_MESSAGE);
+      }
+    } catch (Exception e) {
+      JOptionPane.showMessageDialog(this,
+          "Error searching for games: " + e.getMessage(),
+          "Search Error",
+          JOptionPane.ERROR_MESSAGE);
+    }
+  }
+
   public void setCurrentUser(User user) {
     this.currentUser = user;
   }
