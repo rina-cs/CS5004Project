@@ -118,6 +118,7 @@ public class GamePanel extends JPanel {
     ImagePanel imagePanel = new ImagePanel(imagePath);
     imagePanel.setPreferredSize(new Dimension(250, 180));
     imagePanel.setLayout(new BorderLayout());
+    panel.add(imagePanel);
 
     // Game details
     JPanel detailsPanel = new JPanel(new GridLayout(2, 1));
