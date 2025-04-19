@@ -34,6 +34,7 @@ public class MainWindow extends JFrame {
     this.gameController = gameController;
     this.cartService = cartService;
     this.gameService = gameService;
+    this.currentUser = null;
 
     setTitle("Game Inventory Management System");
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -218,6 +219,14 @@ public class MainWindow extends JFrame {
 
   public User getCurrentUser() {
     return currentUser;
+  }
+
+  public CartService getCartService() {
+    return cartService;
+  }
+
+  public GameService getGameService() {
+    return gameService;
   }
 
   private void setupLayout() {

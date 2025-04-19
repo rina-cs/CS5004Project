@@ -208,14 +208,36 @@ public class AdminGamePanel extends JPanel {
     imagePathField.addKeyListener(keyAdapter);
 
     // Set up focus traversal
-    gameNameField.setNextFocusableComponent(priceField);
-//    priceField.setNextFocusableComponent(likesSpinner);
-    // Get the JSpinner's editor component and make it part of the focus cycle
-//    Component spinnerEditor = likesSpinner.getEditor();
-//    if (spinnerEditor instanceof JSpinner.DefaultEditor) {
-//      ((JSpinner.DefaultEditor)spinnerEditor).getTextField().setNextFocusableComponent(imagePathField);
-//    }
-//    imagePathField.setNextFocusableComponent(addNewGameButton);
+    setFocusTraversalPolicy(new FocusTraversalPolicy() {
+        @Override
+        public Component getComponentAfter(Container aContainer, Component aComponent) {
+            if (aComponent == gameNameField) return priceField;
+            if (aComponent == priceField) return imagePathField;
+            return null;
+        }
+
+        @Override
+        public Component getComponentBefore(Container aContainer, Component aComponent) {
+            if (aComponent == priceField) return gameNameField;
+            if (aComponent == imagePathField) return priceField;
+            return null;
+        }
+
+        @Override
+        public Component getFirstComponent(Container aContainer) {
+            return gameNameField;
+        }
+
+        @Override
+        public Component getLastComponent(Container aContainer) {
+            return imagePathField;
+        }
+
+        @Override
+        public Component getDefaultComponent(Container aContainer) {
+            return gameNameField;
+        }
+    });
 
     // Add action listeners
     addNewGameButton.addActionListener(new ActionListener() {

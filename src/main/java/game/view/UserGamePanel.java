@@ -4,6 +4,10 @@ import game.controller.GameController;
 import game.controller.UserController;
 import game.model.Game;
 import game.model.User;
+import game.model.Cart;
+import game.model.CartItem;
+import game.service.CartService;
+import game.service.GameService;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -15,17 +19,19 @@ import java.util.List;
 public class UserGamePanel extends JPanel {
   private final GameController gameController;
   private final UserController userController;
+  private final CartService cartService;
+  private final GameService gameService;
   private User currentUser;
   private final MainWindow mainWindow;
 
   // UI components
   private JTabbedPane tabbedPane;
   private JPanel allGamesPanel;
-  private JTable favoritesTable;
+  private JTable cartTable;
   private DefaultTableModel allGamesModel;
-  private DefaultTableModel favoritesModel;
-  private JButton addToFavoritesButton;
-  private JButton removeFromFavoritesButton;
+  private DefaultTableModel cartModel;
+  private JButton addToCartButton;
+  private JButton removeFromCartButton;
   private JButton refreshButton;
   private JButton logoutButton;
   private JTextField searchField;
@@ -34,6 +40,8 @@ public class UserGamePanel extends JPanel {
   public UserGamePanel(GameController gameController, UserController userController, User user, MainWindow mainWindow) {
     this.gameController = gameController;
     this.userController = userController;
+    this.cartService = mainWindow.getCartService();
+    this.gameService = mainWindow.getGameService();
     this.currentUser = user;
     this.mainWindow = mainWindow;
 
@@ -42,6 +50,7 @@ public class UserGamePanel extends JPanel {
     initializeComponents();
     setupLayout();
     refreshGameList();
+    refreshCartList();
   }
 
   private void initializeComponents() {
@@ -49,37 +58,37 @@ public class UserGamePanel extends JPanel {
     tabbedPane = new JTabbedPane();
 
     // Table models
-    String[] columns = {"ID", "Name", "Price", "Likes", "Image"};
+    String[] columns = {"ID", "Name", "Price", "Quantity"};
     allGamesModel = new DefaultTableModel(columns, 0) {
       @Override
       public boolean isCellEditable(int row, int column) {
         return false;
       }
     };
-    favoritesModel = new DefaultTableModel(columns, 0) {
+    cartModel = new DefaultTableModel(columns, 0) {
       @Override
       public boolean isCellEditable(int row, int column) {
         return false;
       }
     };
 
-    // Favorites table
-    favoritesTable = new JTable(favoritesModel);
-    favoritesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    // Cart table
+    cartTable = new JTable(cartModel);
+    cartTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     // Search
     searchField = new JTextField(20);
     searchButton = new JButton("Search");
 
     // Buttons
-    addToFavoritesButton = new JButton("Add to Favorites");
-    removeFromFavoritesButton = new JButton("Remove from Favorites");
+    addToCartButton = new JButton("Add to Cart");
+    removeFromCartButton = new JButton("Remove from Cart");
     refreshButton = new JButton("Refresh");
     logoutButton = new JButton("Logout");
 
     // Listeners
-    addToFavoritesButton.addActionListener(e -> addToFavorites());
-    removeFromFavoritesButton.addActionListener(e -> removeFromFavorites());
+    addToCartButton.addActionListener(e -> addToCart(addToCartButton));
+    removeFromCartButton.addActionListener(e -> removeFromCart());
     refreshButton.addActionListener(e -> refreshGameList());
     logoutButton.addActionListener(e -> mainWindow.showLoginPanel());
     searchButton.addActionListener(e -> searchGames());
@@ -94,14 +103,14 @@ public class UserGamePanel extends JPanel {
     JScrollPane allGamesScrollPane = new JScrollPane(allGamesPanel);
     allGamesScrollPane.getVerticalScrollBar().setUnitIncrement(16); // Smooth scrolling
 
-    // Favorites panel
-    JPanel favoritesPanel = new JPanel(new BorderLayout());
-    JScrollPane favoritesScrollPane = new JScrollPane(favoritesTable);
-    favoritesPanel.add(favoritesScrollPane, BorderLayout.CENTER);
+    // Cart panel
+    JPanel cartPanel = new JPanel(new BorderLayout());
+    JScrollPane cartScrollPane = new JScrollPane(cartTable);
+    cartPanel.add(cartScrollPane, BorderLayout.CENTER);
 
-    JPanel favoritesButtonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    favoritesButtonPanel.add(removeFromFavoritesButton);
-    favoritesPanel.add(favoritesButtonPanel, BorderLayout.SOUTH);
+    JPanel cartButtonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    cartButtonPanel.add(removeFromCartButton);
+    cartPanel.add(cartButtonPanel, BorderLayout.SOUTH);
 
     // Search panel
     JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -120,7 +129,7 @@ public class UserGamePanel extends JPanel {
 
     // Tabs
     tabbedPane.addTab("All Games", allGamesScrollPane);
-    tabbedPane.addTab("My Favorites", favoritesPanel);
+    tabbedPane.addTab("My Cart", cartPanel);
 
     // Bottom buttons
     JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -131,20 +140,6 @@ public class UserGamePanel extends JPanel {
     add(tabbedPane, BorderLayout.CENTER);
     add(bottomPanel, BorderLayout.SOUTH);
     add(topPanel, BorderLayout.NORTH);
-  }
-
-  public void refreshGameList() {
-    allGamesPanel.removeAll();
-    List<Game> games = gameController.getAllGames();
-
-    games.sort((g1, g2) -> Integer.compare(g2.getLikes(), g1.getLikes()));
-
-    for (Game game : games) {
-      JPanel gamePanel = createGamePanel(game);
-      allGamesPanel.add(gamePanel);
-    }
-    allGamesPanel.revalidate();
-    allGamesPanel.repaint();
   }
 
   private JPanel createGamePanel(Game game) {
@@ -176,6 +171,8 @@ public class UserGamePanel extends JPanel {
     JLabel priceLabel = new JLabel("$ " + game.getPrice());
     priceLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
     JButton addToCartButton = new JButton("Add to Cart");
+    addToCartButton.setName(game.getId().toString());
+    addToCartButton.addActionListener(e -> addToCart(addToCartButton));
     priceAndButton.add(priceLabel, BorderLayout.WEST);
     priceAndButton.add(addToCartButton, BorderLayout.EAST);
     detailsPanel.add(priceAndButton);
@@ -183,35 +180,19 @@ public class UserGamePanel extends JPanel {
     panel.add(detailsPanel, BorderLayout.SOUTH);
     return panel;
   }
+  
+  public void refreshGameList() {
+    allGamesPanel.removeAll();
+    List<Game> games = gameController.getAllGames();
 
-  private void addToFavorites() {
-    int selectedRow = allGamesPanel.getComponentCount() - 1;
-    if (selectedRow == -1) {
-      JOptionPane.showMessageDialog(this,
-          "Please select a game to add to favorites",
-          "Selection Error",
-          JOptionPane.ERROR_MESSAGE);
-      return;
-    }
-    JOptionPane.showMessageDialog(this,
-        "Adding to favorites is not implemented yet",
-        "Not Implemented",
-        JOptionPane.INFORMATION_MESSAGE);
-  }
+    games.sort((g1, g2) -> Integer.compare(g2.getLikes(), g1.getLikes()));
 
-  private void removeFromFavorites() {
-    int selectedRow = favoritesTable.getSelectedRow();
-    if (selectedRow == -1) {
-      JOptionPane.showMessageDialog(this,
-          "Please select a game to remove from favorites",
-          "Selection Error",
-          JOptionPane.ERROR_MESSAGE);
-      return;
+    for (Game game : games) {
+      JPanel gamePanel = createGamePanel(game);
+      allGamesPanel.add(gamePanel);
     }
-    JOptionPane.showMessageDialog(this,
-        "Removing from favorites is not implemented yet",
-        "Not Implemented",
-        JOptionPane.INFORMATION_MESSAGE);
+    allGamesPanel.revalidate();
+    allGamesPanel.repaint();
   }
 
   private void searchGames() {
@@ -243,7 +224,73 @@ public class UserGamePanel extends JPanel {
     }
   }
 
+  private void addToCart(JButton addToCartButton) {
+    //check if user is logged in
+    if (currentUser == null) {
+        JOptionPane.showMessageDialog(this, "Please log in to add items to cart", "Error", JOptionPane.ERROR_MESSAGE);
+        return;
+    }
+
+    try {
+        // Get the game ID from the button's name
+        Long gameId = Long.parseLong(addToCartButton.getName());
+        
+        // Get the game object
+        Game game = gameController.getGameById(gameId).getBody();
+        if (game == null) {
+            throw new Exception("Game not found");
+        }
+        
+        // Add game to cart
+        cartService.addItemToCart(currentUser.getId(), game);
+        JOptionPane.showMessageDialog(this, "Game added to cart successfully!");
+        refreshCartList(); // Refresh cart list
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(this, "Failed to add game to cart: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+    }
+  }
+
+  private void removeFromCart() {
+    int selectedRow = cartTable.getSelectedRow();
+    if (selectedRow == -1) {
+      JOptionPane.showMessageDialog(this,
+          "Please select a game to remove from cart",
+          "Selection Error",
+          JOptionPane.ERROR_MESSAGE);
+      return;
+    }
+
+    try {
+      Long gameId = Long.parseLong(cartModel.getValueAt(selectedRow, 0).toString());
+      cartService.removeItemFromCart(currentUser.getId(), gameId);
+      refreshCartList();
+    } catch (Exception e) {
+      e.printStackTrace();
+      JOptionPane.showMessageDialog(this,
+          "Error removing game from cart: " + e.getMessage(),
+          "Error",
+          JOptionPane.ERROR_MESSAGE);
+    }
+  }
+
   public void setCurrentUser(User user) {
     this.currentUser = user;
+  }
+
+  private void refreshCartList() {
+    cartModel.setRowCount(0);
+    if (currentUser == null) return;
+    
+    Cart cart = cartService.getOrCreateCartForUser(currentUser.getId());
+    if (cart != null) {
+      for (CartItem item : cart.getItems()) {
+        cartModel.addRow(new Object[]{
+          item.getGameId(),
+          item.getGameName(),
+          item.getPrice(),
+          item.getQuantity()
+        });
+      }
+    }
   }
 }
