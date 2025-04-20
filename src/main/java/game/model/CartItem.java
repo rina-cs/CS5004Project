@@ -1,6 +1,7 @@
 package game.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import java.util.Objects;
 
 public class CartItem {
 
@@ -13,6 +14,20 @@ public class CartItem {
   private String gameName;
   private Double price;
   private Integer quantity = 1;
+
+  
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    CartItem cartItem = (CartItem) o;
+    return Objects.equals(gameId, cartItem.gameId);
+}
+  
+  @Override
+  public int hashCode() {
+    return Objects.hash(gameId);
+  }
 
   public Integer getQuantity() {
     return quantity;

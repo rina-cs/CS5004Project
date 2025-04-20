@@ -40,22 +40,15 @@ public class CartService {
 
   public Cart addItemToCart(Long userId, Game game) {
     Cart cart = getOrCreateCartForUser(userId);
+    CartItem cartItem = new CartItem();
+    cartItem.setGameId(game.getId());
+    cartItem.setGameName(game.getName());
+    cartItem.setPrice(game.getPrice());
+    cartItem.setQuantity(1);
+    cartItem.setCart(cart);
 
-    boolean gameExists = cart.getItems().stream()
-        .anyMatch(item -> item.getGameId().equals(game.getId()));
-
-    if (!gameExists) {
-      CartItem cartItem = new CartItem();
-      cartItem.setGameId(game.getId());
-      cartItem.setGameName(game.getName());
-      cartItem.setPrice(game.getPrice());
-      cartItem.setQuantity(1);
-      cartItem.setCart(cart);
-
-      cart.getItems().add(cartItem);
-      return save(cart);
-    }
-
+    cart.addItem(cartItem);
+    
     return cart;
   }
 

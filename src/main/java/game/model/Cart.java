@@ -23,6 +23,14 @@ public class Cart {
     this.items = items;
   }
 
+  public void addItem(CartItem item) {
+    items.add(item);
+  }
+  
+  public void removeItem(CartItem item) {
+    items.remove(item);
+  } 
+
   public Double getTotal() {
     return items.stream()
         .mapToDouble(item -> item.getPrice())
