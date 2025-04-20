@@ -277,9 +277,9 @@ public class UserGamePanel extends JPanel {
   }
 
   private void refreshCartList(Cart cart) {
-    cartModel.setRowCount(0); //clear the table
+    // cartModel.setRowCount(0); //clear the table
     
-    if (cart != null) {
+    // if (cart != null) {
       for (CartItem item : cart.getItems()) {
           cartModel.addRow(new Object[]{
               item.getGameId(),
@@ -289,5 +289,4 @@ public class UserGamePanel extends JPanel {
           });
       }
     }
-  }
 }

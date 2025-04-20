@@ -5,7 +5,7 @@ import java.util.List;
 
 public class Cart {
   private Long userId;
-  private List<CartItem> items = new ArrayList<>();
+  private List<CartItem> items;
 
   public Long getUserId() {
     return userId;

@@ -47,9 +47,9 @@ public class CartService {
     cartItem.setQuantity(1);
     cartItem.setCart(cart);
 
-    cart.addItem(cartItem);
+    cart.getItems().add(cartItem);
     
-    return cart;
+    return save(cart);
   }
 
   public Cart removeItemFromCart(Long userId, Long gameId) {
