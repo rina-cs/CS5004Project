@@ -4,6 +4,9 @@ import game.model.Cart;
 import game.model.CartItem;
 import game.repository.CartRepository;
 import game.service.FileStorageService;
+import game.model.User;
+import game.repository.UserRepository;
+import game.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -14,7 +17,6 @@ import java.util.stream.Collectors;
 
 @Repository
 public class CartRepositoryImpl implements CartRepository {
-
   private static final String CARTS_FILE = "carts.json";
   private final AtomicLong cartIdGenerator = new AtomicLong(1);
   private final AtomicLong itemIdGenerator = new AtomicLong(1);
@@ -30,20 +32,14 @@ public class CartRepositoryImpl implements CartRepository {
   private void initializeIdGenerators() {
     List<Cart> carts = findAll();
     if (!carts.isEmpty()) {
-      long maxCartId = carts.stream()
-          .mapToLong(Cart::getId)
-          .max()
-          .orElse(0);
-      cartIdGenerator.set(maxCartId + 1);
-
-      long maxItemId = carts.stream()
-          .flatMap(cart -> cart.getItems().stream())
-          .mapToLong(CartItem::getId)
-          .max()
-          .orElse(0);
-      itemIdGenerator.set(maxItemId + 1);
+        long maxItemId = carts.stream()
+            .flatMap(cart -> cart.getItems().stream())
+            .mapToLong(CartItem::getId)
+            .max()
+            .orElse(0);
+        itemIdGenerator.set(maxItemId + 1);
     }
-  }
+}
 
   @Override
   public List<Cart> findAll() {
@@ -51,19 +47,15 @@ public class CartRepositoryImpl implements CartRepository {
   }
 
   @Override
-  public Optional<Cart> findById(Long id) {
+  public Optional<Cart> findById(Long userId) {
     return findAll().stream()
-        .filter(cart -> cart.getId().equals(id))
+        .filter(cart -> cart.getUserId().equals(userId))
         .findFirst();
   }
 
   @Override
   public Cart save(Cart cart) {
     List<Cart> carts = findAll();
-
-    if (cart.getId() == null) {
-      cart.setId(cartIdGenerator.getAndIncrement());
-    }
 
     for (CartItem item : cart.getItems()) {
       if (item.getId() == null) {
@@ -72,7 +64,7 @@ public class CartRepositoryImpl implements CartRepository {
     }
 
     carts = carts.stream()
-        .filter(existingCart -> !existingCart.getId().equals(cart.getId()))
+        .filter(existingCart -> !existingCart.getUserId().equals(cart.getUserId()))
         .collect(Collectors.toList());
 
     carts.add(cart);
@@ -81,23 +73,11 @@ public class CartRepositoryImpl implements CartRepository {
   }
 
   @Override
-  public void deleteById(Long id) {
+  public void deleteById(Long userId) {
     List<Cart> carts = findAll();
     List<Cart> updatedCarts = carts.stream()
-        .filter(cart -> !cart.getId().equals(id))
+        .filter(cart -> !cart.getUserId().equals(userId))
         .collect(Collectors.toList());
     fileStorageService.writeList(CARTS_FILE, updatedCarts);
-  }
-
-  @Override
-  public long count() {
-    return findAll().size();
-  }
-
-  @Override
-  public Optional<Cart> findByUserId(Long userId) {
-    return findAll().stream()
-        .filter(cart -> cart.getUserId().equals(userId))
-        .findFirst();
   }
 }

@@ -8,5 +8,4 @@ public interface FileRepository<T, ID> {
   Optional<T> findById(ID id);
   T save(T entity);
   void deleteById(ID id);
-  long count();
 }

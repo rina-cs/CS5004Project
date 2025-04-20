@@ -76,11 +76,6 @@ public class UserRepositoryImpl implements UserRepository {
   }
 
   @Override
-  public long count() {
-    return findAll().size();
-  }
-
-  @Override
   public Optional<User> findByUsername(String username) {
     return findAll().stream()
         .filter(user -> user.getUsername().equals(username))

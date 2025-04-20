@@ -20,7 +20,7 @@ public class CartService {
 
 
   public Optional<Cart> findByUserId(Long userId) {
-    return cartRepository.findByUserId(userId);
+    return cartRepository.findById(userId);
   }
   public Cart save(Cart cart) {
     return cartRepository.save(cart);

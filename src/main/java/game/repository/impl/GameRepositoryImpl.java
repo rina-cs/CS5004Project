@@ -117,11 +117,6 @@ public class GameRepositoryImpl implements GameRepository {
   }
 
   @Override
-  public long count() {
-    return findAll().size();
-  }
-
-  @Override
   public List<Game> findByNameContainingIgnoreCase(String name) {
     String lowercaseName = name.toLowerCase();
     return findAll().stream()
