@@ -1,15 +1,1 @@
-[
-  {"id":3,"name":"Minecraft","likes":200,"price":30.0,"image":"images/minecraft.jpg"},
-  {"id":4,"name":"Cyberpunk 2077","likes":90,"price":30.0,"image":"images/cyberpunk.jpg"},
-  {"id":5,"name":"Final Fantasy XIV","likes":150,"price":30.0,"image":"images/final-fantasy.jpg"},
-  {"id":6,"name":"Call of Duty","likes":85,"price":30.0,"image":"images/cod.jpg"},
-  {"id":7,"name":"Grand Theft Auto V","likes":300,"price":50.0,"image":"images/gta.jpg"},
-  {"id":8,"name":"Elden Ring","likes":250,"price":30.0,"image":"images/elden-ring.jpg"},
-  {"id":10,"name":"Stardew Valley","likes":190,"price":15.0,"image":"images/stardew.jpg"},
-  {"id":0,"name":"test_add_new2","likes":0,"price":123.0,"image":null},
-  {"id":11,"name":"test_add_new1","likes":0,"price":10.0,"image":null},
-  {"id":9,"name":"Hollow Knight","likes":170,"price":15.0,"image":"images/hollow-knight.jpg"},
-  {"id":1,"name":"The Legend of Zelda","likes":100,"price":20.0,"image":"images/zelda.jpg"},
-  {"id":2,"name":"Super Mario Odyssey","likes":120,"price":25.0,"image":"images/mario.jpg"},
-  {"id":12,"name":"test_add_new3","likes":0,"price":10.0,"image":null}
-]
+[{"id":3,"name":"Minecraft","likes":200,"price":30.0,"image":"images/minecraft.jpg"},{"id":4,"name":"Cyberpunk 2077","likes":90,"price":30.0,"image":"images/cyberpunk.jpg"},{"id":5,"name":"Final Fantasy XIV","likes":150,"price":30.0,"image":"images/final-fantasy.jpg"},{"id":6,"name":"Call of Duty","likes":85,"price":30.0,"image":"images/cod.jpg"},{"id":7,"name":"Grand Theft Auto V","likes":300,"price":50.0,"image":"images/gta.jpg"},{"id":8,"name":"Elden Ring","likes":250,"price":30.0,"image":"images/elden-ring.jpg"},{"id":10,"name":"Stardew Valley","likes":190,"price":15.0,"image":"images/stardew.jpg"},{"id":0,"name":"test_add_new2","likes":0,"price":123.0,"image":null},{"id":11,"name":"test_add_new1","likes":0,"price":10.0,"image":null},{"id":9,"name":"Hollow Knight","likes":170,"price":15.0,"image":"images/hollow-knight.jpg"},{"id":1,"name":"The Legend of Zelda","likes":100,"price":20.0,"image":"images/zelda.jpg"},{"id":2,"name":"Super Mario Odyssey","likes":120,"price":25.0,"image":"images/mario.jpg"},{"id":12,"name":"test_add_new3","likes":0,"price":15.0,"image":null}]

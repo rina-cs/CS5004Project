@@ -6,7 +6,6 @@ import game.model.Game;
 import game.model.User;
 import game.model.Cart;
 import game.model.CartItem;
-import game.service.CartService;
 import game.service.GameService;
 
 import javax.swing.*;
@@ -14,14 +13,15 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.List;
 
 public class UserGamePanel extends JPanel {
   private final GameController gameController;
   private final UserController userController;
-  private final CartService cartService;
   private final GameService gameService;
   private User currentUser;
+  private Cart cart = new Cart(); // Initialize an in-memory cart
   private final MainWindow mainWindow;
 
   // UI components
@@ -40,7 +40,6 @@ public class UserGamePanel extends JPanel {
   public UserGamePanel(GameController gameController, UserController userController, User user, MainWindow mainWindow) {
     this.gameController = gameController;
     this.userController = userController;
-    this.cartService = mainWindow.getCartService();
     this.gameService = mainWindow.getGameService();
     this.currentUser = user;
     this.mainWindow = mainWindow;
@@ -50,7 +49,8 @@ public class UserGamePanel extends JPanel {
     initializeComponents();
     setupLayout();
     refreshGameList();
-    refreshCartList(cartService.getOrCreateCartForUser(currentUser.getId()));
+    this.cart.setItems(new ArrayList<>()); // Initialize cart items
+    refreshCartList(cart);
   }
 
   private void initializeComponents() {
@@ -88,7 +88,7 @@ public class UserGamePanel extends JPanel {
 
     // Listeners
     addToCartButton.addActionListener(e -> addToCart(addToCartButton));
-    //removeFromCartButton.addActionListener(e -> removeFromCart());
+    removeFromCartButton.addActionListener(e -> removeFromCart(removeFromCartButton));
     refreshButton.addActionListener(e -> refreshGameList());
     logoutButton.addActionListener(e -> mainWindow.showLoginPanel());
     searchButton.addActionListener(e -> searchGames());
@@ -225,68 +225,67 @@ public class UserGamePanel extends JPanel {
   }
 
   private void addToCart(JButton addToCartButton) {
-    //check if user is logged in
     if (currentUser == null) {
         JOptionPane.showMessageDialog(this, "Please log in to add items to cart", "Error", JOptionPane.ERROR_MESSAGE);
         return;
     }
 
     try {
-        // Get the game ID from the button's name
         Long gameId = Long.parseLong(addToCartButton.getName());
-        
-        // Get the game object
         Game game = gameController.getGameById(gameId).getBody();
         if (game == null) {
             throw new Exception("Game not found");
         }
-        
-        // Add game to cart
-        Cart updatedCart = cartService.addItemToCart(currentUser.getId(), game);
+
+        if (cart.containsGame(gameId)) {
+            JOptionPane.showMessageDialog(this, "Game already in cart", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        CartItem cartItem = new CartItem();
+        cartItem.setGameId(game.getId());
+        cartItem.setGameName(game.getName());
+        cartItem.setPrice(game.getPrice());
+        cartItem.setQuantity(1);
+        cart.getItems().add(cartItem);
+
         JOptionPane.showMessageDialog(this, "Game added to cart successfully!");
-        refreshCartList(updatedCart); // Refresh cart list
+        refreshCartList(cart); // Refresh cart list
     } catch (Exception e) {
         JOptionPane.showMessageDialog(this, "Failed to add game to cart: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
     }
-  }
+}
 
-  // private void removeFromCart() {
-  //   int selectedRow = cartTable.getSelectedRow();
-  //   if (selectedRow == -1) {
-  //     JOptionPane.showMessageDialog(this,
-  //         "Please select a game to remove from cart",
-  //         "Selection Error",
-  //         JOptionPane.ERROR_MESSAGE);
-  //     return;
-  //   }
-  //   try {
-  //     Long gameId = Long.parseLong(cartModel.getValueAt(selectedRow, 0).toString());
-  //     cartService.removeItemFromCart(currentUser.getId(), gameId);
-  //     refreshCartList();
-  //   } catch (Exception e) {
-  //     e.printStackTrace();
-  //     JOptionPane.showMessageDialog(this,
-  //         "Error removing game from cart: " + e.getMessage(),
-  //         "Error",
-  //         JOptionPane.ERROR_MESSAGE);
-  //   }
-  // }
+private void removeFromCart(JButton removeFromCartButton) {
+    int selectedRow = cartTable.getSelectedRow();
+    if (selectedRow == -1) {
+        JOptionPane.showMessageDialog(this, "Please select a game to remove from cart", "Selection Error", JOptionPane.ERROR_MESSAGE);
+        return;
+    }
+
+    try {
+        Long gameId = Long.parseLong(cartModel.getValueAt(selectedRow, 0).toString());
+        cart.getItems().removeIf(item -> item.getGameId().equals(gameId));
+        JOptionPane.showMessageDialog(this, "Game removed from cart successfully!");
+        refreshCartList(cart);
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(this, "Error removing game from cart: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+    }
+}
 
   public void setCurrentUser(User user) {
     this.currentUser = user;
   }
 
   private void refreshCartList(Cart cart) {
-    // cartModel.setRowCount(0); //clear the table
-    
-    // if (cart != null) {
-      for (CartItem item : cart.getItems()) {
-          cartModel.addRow(new Object[]{
-              item.getGameId(),
-              item.getGameName(),
-              item.getPrice(),
-              item.getQuantity()
-          });
-      }
+    cartModel.setRowCount(0); // Clear the table
+    for (CartItem item : cart.getItems()) {
+        cartModel.addRow(new Object[]{
+            item.getGameId(),
+            item.getGameName(),
+            item.getPrice(),
+            item.getQuantity()
+        });
     }
+  }
 }

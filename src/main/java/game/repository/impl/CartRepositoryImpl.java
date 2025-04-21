@@ -58,19 +58,16 @@ public class CartRepositoryImpl implements CartRepository {
     List<Cart> carts = findAll();
 
     for (CartItem item : cart.getItems()) {
-      if (item.getId() == null) {
-        item.setId(itemIdGenerator.getAndIncrement());
-      }
+        if (item.getId() == null) {
+            item.setId(itemIdGenerator.getAndIncrement());
+        }
     }
 
-    carts = carts.stream()
-        .filter(existingCart -> !existingCart.getUserId().equals(cart.getUserId()))
-        .collect(Collectors.toList());
-
     carts.add(cart);
+
     fileStorageService.writeList(CARTS_FILE, carts);
     return cart;
-  }
+}
 
   @Override
   public void deleteById(Long userId) {

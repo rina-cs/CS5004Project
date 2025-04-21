@@ -22,12 +22,13 @@ public class CartService {
   public Optional<Cart> findByUserId(Long userId) {
     return cartRepository.findById(userId);
   }
+  
   public Cart save(Cart cart) {
     return cartRepository.save(cart);
   }
 
   public Cart getOrCreateCartForUser(Long userId) {
-    Optional<Cart> existingCart = findByUserId(userId);
+    Optional<Cart> existingCart = cartRepository.findById(userId);
     if (existingCart.isPresent()) {
       return existingCart.get();
     } else {
@@ -40,6 +41,9 @@ public class CartService {
 
   public Cart addItemToCart(Long userId, Game game) {
     Cart cart = getOrCreateCartForUser(userId);
+    if (cart.containsGame(game.getId())) {
+      throw new RuntimeException("Game already in cart: " + game.getName());
+    }
     CartItem cartItem = new CartItem();
     cartItem.setGameId(game.getId());
     cartItem.setGameName(game.getName());
